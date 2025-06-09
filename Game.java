@@ -5,12 +5,15 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class Chess extends Application {
+public class Game extends Application {
     private Stage primaryStage;
     
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
+
+        // this is the box title, change it to whatever you want
+        // it will be displayed in the title bar of the window
         primaryStage.setTitle("Welcome to Chess");
 
         // Difficulty Selector
@@ -37,6 +40,10 @@ public class Chess extends Application {
 
         System.out.println(player.getName() + " is playing as White.");
         System.out.println(ai.makeMove(board)); // AI makes a move
+        Piece knight = new Piece("Knight", true, 2, 1);
+        System.out.println(knight.getPossibleMoves());
+        System.out.println(knight);
+
 
         primaryStage.setScene(new Scene(board.getBoardLayout(), 640, 640));
     }
