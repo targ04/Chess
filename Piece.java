@@ -101,10 +101,10 @@ public class Piece {
             case "Pawn" -> calculatePawnMoves();
             case "Knight" -> calculateKnightMoves();
 
-            // case "Bishop" -> calculateBishopMoves();
+            case "Bishop" -> calculateBishopMoves();
             case "Rook" -> calculateRookMoves();
-            // case "Queen" -> {calculateBishopMoves(); calculateRookMoves();}
-            // case "King" -> calculateKingMoves();
+            case "Queen" -> {calculateBishopMoves(); calculateRookMoves();}
+            case "King" -> calculateKingMoves();
             default -> calculatePawnMoves();
 
         };
@@ -165,6 +165,7 @@ public class Piece {
     }
 
     void calculateLinearMoves(int dRank, int dFile) {
+        
         int newRank = rank + dRank;
         int newFile = file + dFile;
         while (board.isValidSquare(newFile, newRank)){
@@ -180,6 +181,32 @@ public class Piece {
             newFile += dFile;
         }
     }
+    
+    void calculateBishopMoves() {
+        calculateLinearMoves(-1, -1);
+        calculateLinearMoves(-1, 1);
+        calculateLinearMoves(1, -1);
+        calculateLinearMoves(1, 1);
+    }
+
+    void calculateKingMoves() {
+        int[][] kingMoves = {
+            {1, 0}, {0, 1}, {-1, 0}, {0, -1}, // Horizontal and vertical
+            {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // Diagonal
+        };
+
+        for (int[] move : kingMoves) {
+            int newFile = file + move[0];
+            int newRank = rank + move[1];
+            if (board.isValidSquare(newFile, newRank)) {
+                Square targetSquare = board.getSquare(newRank, newFile);
+                if (!targetSquare.isOccupied() || targetSquare.isOpponentPiece(isWhite)) {
+                    validMoves.add(targetSquare.getPosition());
+                }
+            }
+        }
+    }
+
     // Update position
     public void moveTo(int new_F, int new_R) {
         this.file = new_F;
