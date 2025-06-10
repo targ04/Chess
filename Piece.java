@@ -1,5 +1,6 @@
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 
 public class Piece {
     private String type;       // e.g., "Pawn", "Knight", "Bishop"
@@ -7,6 +8,8 @@ public class Piece {
     private int rank;          // Determines relative importance (Pawn = 1, King = 100)
     private int x, y;          // Position on the board
     private ImageView icon;    // Visual representation of the piece
+    private int ICON_SIZE = 70; // Size of the piece icon
+    private boolean selected = false; // Indicates if the piece is selected
 
     // Constructor
     public Piece(String type, boolean isWhite, int x, int y) {
@@ -16,6 +19,7 @@ public class Piece {
         this.x = x;
         this.y = y;
         this.icon = loadImage(); // Load the piece image
+        addClickEvent();
     }
 
     // Assign rank values based on piece type
@@ -30,13 +34,25 @@ public class Piece {
         };
     }
 
+
+    private void addClickEvent() {
+        icon.setOnMouseClicked(event -> handlePieceClick(event));
+    }
+
+    private void handlePieceClick(MouseEvent event) {
+        selected = !selected;
+        icon.setOpacity(selected ? 0.6 : 1.0); // Highlight when selected
+        System.out.println((isWhite ? "White " : "Black ") + type + " selected at (" + x + ", " + y + ")");
+    }
+
+
     private ImageView loadImage() {
         String color = isWhite ? "white" : "black";
         String imagePath = "/resources/icons/" + color + "_" + type.toLowerCase() + ".png";
         Image pieceImage = new Image(getClass().getResource(imagePath).toString());
         ImageView imageView = new ImageView(pieceImage);
-        imageView.setFitWidth(70); // Adjust size to fit tiles
-        imageView.setFitHeight(70);
+        imageView.setFitWidth(ICON_SIZE);
+        imageView.setFitHeight(ICON_SIZE);
         imageView.setPreserveRatio(true);
         return imageView;
     }
@@ -71,6 +87,8 @@ public class Piece {
     public void moveTo(int newX, int newY) {
         this.x = newX;
         this.y = newY;
+        selected = false; // Deselect after moving
+        icon.setOpacity(1.0); // Reset opacity
     }
 
     @Override
