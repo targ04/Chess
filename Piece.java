@@ -8,7 +8,7 @@ public class Piece {
     private int rank;          // Determines relative importance (Pawn = 1, King = 100)
     private int x, y;          // Position on the board
     private ImageView icon;    // Visual representation of the piece
-    private int ICON_SIZE = 70; // Size of the piece icon
+    private int ICON_SIZE = 60; // Size of the piece icon
     private boolean selected = false; // Indicates if the piece is selected
     private Board board; // Reference to the board for interaction
 
@@ -46,16 +46,22 @@ public class Piece {
         if (board.getSelectedPiece() != null && board.getSelectedPiece() != this) {
             board.getSelectedPiece().deselect(); // Deselect the previously selected piece
         }
-        selected = !selected;
-        icon.setOpacity(selected ? 0.6 : 1.0); // Highlight when selected
+        else if (selected) {
+            deselect(); // Deselect if the same piece is clicked again
+            return;
+        }
+        // Select this piece
+        selected = true;
+        icon.setOpacity(0.6); // Highlight when selected
         board.setSelectedPiece(this); // Set this piece as the selected piece on the board
         System.out.println((isWhite ? "White " : "Black ") + type + " selected at (" + x + ", " + y + ")");
     }
 
 
-    private void deselect() {
+    protected void deselect() {
         selected = false;
         icon.setOpacity(1.0); // Reset opacity when deselected
+        board.setSelectedPiece(null);
         System.out.println((isWhite ? "White " : "Black ") + type + " deselected at (" + x + ", " + y + ")");
     }
 
@@ -102,6 +108,14 @@ public class Piece {
         this.y = newY;
         selected = false; // Deselect after moving
         icon.setOpacity(1.0); // Reset opacity
+    }
+
+    // moveTo method with chess board notation as input
+    public void moveTo(String position) {
+        int newX = position.charAt(0) - 'A';
+        int newY = board.getSize() - Character.getNumericValue(position.charAt(1));
+
+        moveTo(newX, newY);
     }
 
     @Override

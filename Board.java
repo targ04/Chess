@@ -1,15 +1,11 @@
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 import java.util.HashMap;
 
 public class Board {
-    private static final int SIZE = 8;
-    private static final int TILE_SIZE = 80;
+    private static final int SIZE = 8; // board size
     private GridPane gridPane;
-    private HashMap<String, StackPane> squares; // Map squares by chess coordinates (A1, B2, etc.)
-    private static final String WHITE_COLOR = "#deb887"; // Light brown
-    private static final String BLACK_COLOR = "#8b4513"; // Dark brown
-    private Piece selectedPiece; // Currently selected piece, if any
+    private HashMap<String, Square> squares; // Map squares by chess coordinates (A1, B2, etc.)
+    private Piece selectedPiece = null; // Currently selected piece, if any
 
     public Board() {
         gridPane = new GridPane();
@@ -23,9 +19,11 @@ public class Board {
             for (int col = 0; col < SIZE; col++) {
                 // get the chess coordinate and create a square, and add to gridPane
                 String position = getChessCoordinate(row, col);
-                StackPane cell = new StackPane();
-                cell.setPrefSize(TILE_SIZE, TILE_SIZE);
-                cell.setStyle("-fx-background-color: " + ((row + col) % 2 == 0 ? WHITE_COLOR : BLACK_COLOR) + ";");
+                Square cell = new Square(position);
+                
+                // allow click functionality on each square
+                cell.setOnMouseClicked(event -> handleSquareClick(position));
+                
                 squares.put(position, cell); // Store in HashMap
                 gridPane.add(cell, col, row);
             }
@@ -67,10 +65,37 @@ public class Board {
     }
 
 
+    private void handleSquareClick(String position){
+        if (selectedPiece == null) return; // No piece selected
+
+        Square oldSquare = getSquare(selectedPiece.getY(), selectedPiece.getX());
+        Square newSquare = getSquare(position);
+
+        if (newSquare == oldSquare) return;
+
+        else if (newSquare.isOccupied() && newSquare.getPiece().isWhite() == selectedPiece.isWhite()) {
+            return; // Cannot move to a square occupied by own color
+        }
+
+        // move piece to new square
+        selectedPiece.moveTo(position);
+
+        // remove the icon from old square
+        oldSquare.removePiece();
+        newSquare.setPiece(selectedPiece); 
+
+        System.out.println(selectedPiece.getType() + " to " + position);
+
+        // Deselect piece after moving
+        selectedPiece.deselect();
+
+    }
+
     private void addPiece(Piece piece) {
         // add the piece to the board at its position
-        StackPane square = getSquare(getChessCoordinate(piece.getY(), piece.getX()));
-        square.getChildren().add(piece.getIcon());
+        Square square = getSquare(getChessCoordinate(piece.getY(), piece.getX()));
+        square.setPiece(piece);
+
     }
 
     public void setSelectedPiece(Piece piece) {
@@ -86,8 +111,12 @@ public class Board {
     }
 
     // Get square by its chess notation
-    public StackPane getSquare(String position) {
+    public Square getSquare(String position) {
         return squares.get(position);
+    }
+
+    public Square getSquare(int row, int col) {
+        return squares.get(getChessCoordinate(row, col));
     }
 
     public GridPane getBoardLayout() {
@@ -96,5 +125,9 @@ public class Board {
 
     public Piece getSelectedPiece() {
         return selectedPiece;
+    }
+
+    public int getSize() {
+        return SIZE;
     }
 }
