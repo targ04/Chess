@@ -77,6 +77,8 @@ public class Board {
             return; // Cannot move to a square occupied by own color
         }
 
+        if (!selectedPiece.getValidMoves().contains(position)) return;
+
         // move piece from old square to new square
         oldSquare.removePiece();
         newSquare.setPiece(selectedPiece); 
@@ -104,6 +106,10 @@ public class Board {
         char f = (char) ('A' + file); // A-H for columns
         int r = SIZE - rank;         // 1-8 for rows (flipped for correct chess orientation)
         return "" + f + r;
+    }
+
+    public boolean isValidSquare(int file, int rank) {
+        return file >= 0 && file < SIZE && rank >= 0 && rank < SIZE;
     }
 
     // Get square by its chess notation

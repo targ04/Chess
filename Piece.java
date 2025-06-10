@@ -31,6 +31,8 @@ public class Piece {
         this.position = board.getChessCoordinate(rank, file); // Convert to chess notation
 
         validMoves = new HashSet<>(); // Initialize valid moves set
+        updateMoves(); // Initialize valid moves
+
     }
 
     // Assign rank values based on piece type
@@ -61,6 +63,7 @@ public class Piece {
         }
         // Select this piece
         selected = true;
+        updateMoves();
         icon.setOpacity(0.6); // Highlight when selected
         board.setSelectedPiece(this); // Set this piece as the selected piece on the board
         System.out.println((isWhite ? "White " : "Black ") + type + " selected at " + position);
@@ -92,19 +95,91 @@ public class Piece {
     }
 
     // Get possible moves based on piece type
-    public String getPossibleMoves() {
-        return switch (type) {
-            case "Pawn" -> "Forward 1 or 2 squares (first move), diagonal captures.";
-            case "Knight" -> "L-shaped moves (2+1 or 1+2 in any direction).";
-            case "Bishop" -> "Diagonal moves.";
-            case "Rook" -> "Vertical and horizontal moves.";
-            case "Queen" -> "Combination of Rook and Bishop moves.";
-            case "King" -> "1 square in any direction.";
-            default -> "Unknown piece.";
+    public void updateMoves() {
+        validMoves.clear();
+        switch (type) {
+            case "Pawn" -> calculatePawnMoves();
+            case "Knight" -> calculateKnightMoves();
+
+            // case "Bishop" -> calculateBishopMoves();
+            case "Rook" -> calculateRookMoves();
+            // case "Queen" -> {calculateBishopMoves(); calculateRookMoves();}
+            // case "King" -> calculateKingMoves();
+            default -> calculatePawnMoves();
+
         };
     }
 
+    void calculatePawnMoves() {
+        int direction = isWhite ? -1 : 1; // white moves up (-1), black down
+        int startRank = isWhite ? 6 : 1; // Starting rank for pawns
+        Square fwdOne = board.getSquare(rank + direction, file);
+        if (!fwdOne.isOccupied()) validMoves.add(fwdOne.getPosition()); // Move forward one square
+        
+        if (rank == startRank) { // If on starting rank, can move two squares forward
+            Square fwdTwo = board.getSquare(rank + 2 * direction, file);
+            if (!fwdTwo.isOccupied() && !fwdOne.isOccupied()) validMoves.add(fwdTwo.getPosition());
+        }
 
+        // capture diagonally
+        if (file > 0) { // Check left diagonal
+            Square leftCapture = board.getSquare(rank + direction, file - 1);
+            if (leftCapture.isOccupied() && leftCapture.isOpponentPiece(isWhite)) {
+                validMoves.add(leftCapture.getPosition());
+            }
+        }
+
+        if (file < 7) { // Check right diagonal
+            Square rightCapture = board.getSquare(rank + direction, file + 1);
+            if (rightCapture.isOccupied() && rightCapture.isOpponentPiece(isWhite)) {
+                validMoves.add(rightCapture.getPosition());
+            }
+        }
+
+    }
+
+    void calculateKnightMoves() {
+        // Knight moves in an "L" shape: 2 squares in one direction and 1 square perpendicular
+        int[][] knightMoves = {
+            {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
+            {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
+        };
+
+        for (int[] move : knightMoves) {
+            int newFile = file + move[0];
+            int newRank = rank + move[1];
+            if (board.isValidSquare(newFile, newRank)) {
+                Square targetSquare = board.getSquare(newRank, newFile);
+                if (!targetSquare.isOccupied() || targetSquare.isOpponentPiece(isWhite)) {
+                    validMoves.add(targetSquare.getPosition());
+                }
+            }
+        }
+    }
+    
+    void calculateRookMoves() {
+        calculateLinearMoves(1, 0); // down
+        calculateLinearMoves(0, 1); // right
+        calculateLinearMoves(-1, 0); // up
+        calculateLinearMoves(0, -1); // left
+    }
+
+    void calculateLinearMoves(int dRank, int dFile) {
+        int newRank = rank + dRank;
+        int newFile = file + dFile;
+        while (board.isValidSquare(newFile, newRank)){
+            Square targetSquare = board.getSquare(newRank, newFile);
+            if (targetSquare.isOccupied()) {
+                if (targetSquare.isOpponentPiece(isWhite)) {
+                    validMoves.add(targetSquare.getPosition()); // Capture
+                }
+                break; // Stop if occupied
+            }
+            validMoves.add(targetSquare.getPosition()); // Add empty square
+            newRank += dRank;
+            newFile += dFile;
+        }
+    }
     // Update position
     public void moveTo(int new_F, int new_R) {
         this.file = new_F;
@@ -112,6 +187,7 @@ public class Piece {
         selected = false; // Deselect after moving
         icon.setOpacity(1.0); // Reset opacity
         this.position = board.getChessCoordinate(new_R, new_F); // Update position in chess notation
+        updateMoves();
     }
 
     // moveTo method with chess board notation as input
@@ -130,9 +206,7 @@ public class Piece {
     public int getRank() { return rank; }
     public int getFile() { return file; }
     public String getPosition() { return position; }
-    public Set<String> getValidMoves() {
-        return validMoves;
-    }
+    public Set<String> getValidMoves() { return validMoves; }
 
     @Override
     public String toString() {

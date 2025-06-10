@@ -49,4 +49,10 @@ public class Square extends StackPane {
         this.piece = null;
         this.getChildren().clear(); // Remove the piece icon from the square
     }
+
+    public boolean isOpponentPiece(boolean isWhite) {
+        return piece != null && piece.isWhite() != isWhite;
+    }
+
+
 }
