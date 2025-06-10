@@ -1,31 +1,40 @@
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import java.util.Set;
+import java.util.HashSet;
 
 public class Piece {
-    private String type;       // e.g., "Pawn", "Knight", "Bishop"
+    private String type;       // type of piece (Pawn, Knight, Bishop, Rook, Queen, King)
     private boolean isWhite;   // True for White, False for Black
-    private int rank;          // Determines relative importance (Pawn = 1, King = 100)
-    private int x, y;          // Position on the board
+    private int value;          // Determines relative importance 
+    private int file, rank;          // Position on the board (x is file, y is rank)
+    private String position; // Position in chess notation (e.g., "A1", "B2")
     private ImageView icon;    // Visual representation of the piece
     private int ICON_SIZE = 60; // Size of the piece icon
     private boolean selected = false; // Indicates if the piece is selected
     private Board board; // Reference to the board for interaction
 
+    // set of all valid moves for current position
+    private Set<String> validMoves;
+
     // Constructor
-    public Piece(String type, boolean isWhite, int x, int y, Board board) {
+    public Piece(String type, boolean isWhite, int file, int rank, Board board) {
         this.type = type;
         this.isWhite = isWhite;
-        this.rank = assignRank(type);
-        this.x = x;
-        this.y = y;
+        this.value = assignValue(type);
+        this.file = file;
+        this.rank = rank;
         this.icon = loadImage(); // Load the piece image
         addClickEvent();
         this.board = board; // Set the board reference
+        this.position = board.getChessCoordinate(rank, file); // Convert to chess notation
+
+        validMoves = new HashSet<>(); // Initialize valid moves set
     }
 
     // Assign rank values based on piece type
-    private int assignRank(String type) {
+    private int assignValue(String type) {
         return switch (type) {
             case "Pawn" -> 1;
             case "Knight", "Bishop" -> 3;
@@ -54,7 +63,7 @@ public class Piece {
         selected = true;
         icon.setOpacity(0.6); // Highlight when selected
         board.setSelectedPiece(this); // Set this piece as the selected piece on the board
-        System.out.println((isWhite ? "White " : "Black ") + type + " selected at (" + x + ", " + y + ")");
+        System.out.println((isWhite ? "White " : "Black ") + type + " selected at " + position);
     }
 
 
@@ -62,7 +71,7 @@ public class Piece {
         selected = false;
         icon.setOpacity(1.0); // Reset opacity when deselected
         board.setSelectedPiece(null);
-        System.out.println((isWhite ? "White " : "Black ") + type + " deselected at (" + x + ", " + y + ")");
+        System.out.println((isWhite ? "White " : "Black ") + type + " deselected at " + position);
     }
 
     private ImageView loadImage() {
@@ -95,19 +104,14 @@ public class Piece {
         };
     }
 
-    // Getters
-    public String getType() { return type; }
-    public boolean isWhite() { return isWhite; }
-    public int getRank() { return rank; }
-    public int getX() { return x; }
-    public int getY() { return y; }
 
     // Update position
-    public void moveTo(int newX, int newY) {
-        this.x = newX;
-        this.y = newY;
+    public void moveTo(int new_F, int new_R) {
+        this.file = new_F;
+        this.rank = new_R;
         selected = false; // Deselect after moving
         icon.setOpacity(1.0); // Reset opacity
+        this.position = board.getChessCoordinate(new_R, new_F); // Update position in chess notation
     }
 
     // moveTo method with chess board notation as input
@@ -118,8 +122,20 @@ public class Piece {
         moveTo(newX, newY);
     }
 
+
+    // Getters
+    public String getType() { return type; }
+    public boolean isWhite() { return isWhite; }
+    public int getValue() { return rank; }
+    public int getRank() { return rank; }
+    public int getFile() { return file; }
+    public String getPosition() { return position; }
+    public Set<String> getValidMoves() {
+        return validMoves;
+    }
+
     @Override
     public String toString() {
-        return (isWhite ? "White " : "Black ") + type + " at (" + x + ", " + y + ")";
+        return (isWhite ? "White " : "Black ") + type + " at " + position;
     }
 }

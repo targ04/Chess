@@ -15,17 +15,17 @@ public class Board {
     }
 
     private void initializeBoard() {
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
+        for (int file = 0; file < SIZE; file++) {
+            for (int rank = 0; rank < SIZE; rank++) {
                 // get the chess coordinate and create a square, and add to gridPane
-                String position = getChessCoordinate(row, col);
+                String position = getChessCoordinate(rank, file);
                 Square cell = new Square(position);
                 
                 // allow click functionality on each square
                 cell.setOnMouseClicked(event -> handleSquareClick(position));
                 
                 squares.put(position, cell); // Store in HashMap
-                gridPane.add(cell, col, row);
+                gridPane.add(cell, file, rank);
             }
         }
     }
@@ -68,7 +68,7 @@ public class Board {
     private void handleSquareClick(String position){
         if (selectedPiece == null) return; // No piece selected
 
-        Square oldSquare = getSquare(selectedPiece.getY(), selectedPiece.getX());
+        Square oldSquare = getSquare(selectedPiece.getRank(), selectedPiece.getFile());
         Square newSquare = getSquare(position);
 
         if (newSquare == oldSquare) return;
@@ -77,10 +77,7 @@ public class Board {
             return; // Cannot move to a square occupied by own color
         }
 
-        // move piece to new square
-        selectedPiece.moveTo(position);
-
-        // remove the icon from old square
+        // move piece from old square to new square
         oldSquare.removePiece();
         newSquare.setPiece(selectedPiece); 
 
@@ -91,11 +88,10 @@ public class Board {
 
     }
 
+    // add the piece to the board at its position
     private void addPiece(Piece piece) {
-        // add the piece to the board at its position
-        Square square = getSquare(getChessCoordinate(piece.getY(), piece.getX()));
+        Square square = getSquare(piece.getPosition());
         square.setPiece(piece);
-
     }
 
     public void setSelectedPiece(Piece piece) {
@@ -104,10 +100,10 @@ public class Board {
 
     
     // Converts grid coordinates to chess notation (A1, B2, etc.)
-    private String getChessCoordinate(int row, int col) {
-        char file = (char) ('A' + col); // A-H for columns
-        int rank = SIZE - row;         // 1-8 for rows (flipped for correct chess orientation)
-        return "" + file + rank;
+    protected String getChessCoordinate(int rank, int file) {
+        char f = (char) ('A' + file); // A-H for columns
+        int r = SIZE - rank;         // 1-8 for rows (flipped for correct chess orientation)
+        return "" + f + r;
     }
 
     // Get square by its chess notation
@@ -115,8 +111,8 @@ public class Board {
         return squares.get(position);
     }
 
-    public Square getSquare(int row, int col) {
-        return squares.get(getChessCoordinate(row, col));
+    public Square getSquare(int rank, int file) {
+        return squares.get(getChessCoordinate(rank, file));
     }
 
     public GridPane getBoardLayout() {
