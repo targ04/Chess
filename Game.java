@@ -14,7 +14,7 @@ public class Game extends Application {
 
         // this is the box title, change it to whatever you want
         // it will be displayed in the title bar of the window
-        primaryStage.setTitle("Welcome to Chess");
+        primaryStage.setTitle("Chess Game");
 
         // Difficulty Selector
         ComboBox<String> difficultyBox = new ComboBox<>();
@@ -29,6 +29,7 @@ public class Game extends Application {
         VBox layout = new VBox(20, difficultyBox, playButton);
         layout.setStyle("-fx-alignment: center; -fx-padding: 50;");
 
+        // opening page to the game
         primaryStage.setScene(new Scene(layout, 400, 300));
         primaryStage.show();
     }
@@ -37,15 +38,18 @@ public class Game extends Application {
         Board board = new Board();
         AI ai = new AI(difficulty);
         Player player = new Player("User", true);
+        
 
         System.out.println(player.getName() + " is playing as White.");
         System.out.println(ai.makeMove(board)); // AI makes a move
-        Piece knight = new Piece("Knight", true, 2, 1);
-        System.out.println(knight.getPossibleMoves());
-        System.out.println(knight);
+        // Piece knight = new Piece("Knight", true, 2, 1);
+        // System.out.println(knight.getPossibleMoves());
+        // System.out.println(knight);
 
 
         primaryStage.setScene(new Scene(board.getBoardLayout(), 640, 640));
+        primaryStage.setResizable(false); // avoids resizing the window
+        primaryStage.setTitle("Chess Game - " + difficulty + " Mode");
     }
 
     public static void main(String[] args) {

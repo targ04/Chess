@@ -10,9 +10,10 @@ public class Piece {
     private ImageView icon;    // Visual representation of the piece
     private int ICON_SIZE = 70; // Size of the piece icon
     private boolean selected = false; // Indicates if the piece is selected
+    private Board board; // Reference to the board for interaction
 
     // Constructor
-    public Piece(String type, boolean isWhite, int x, int y) {
+    public Piece(String type, boolean isWhite, int x, int y, Board board) {
         this.type = type;
         this.isWhite = isWhite;
         this.rank = assignRank(type);
@@ -20,6 +21,7 @@ public class Piece {
         this.y = y;
         this.icon = loadImage(); // Load the piece image
         addClickEvent();
+        this.board = board; // Set the board reference
     }
 
     // Assign rank values based on piece type
@@ -40,11 +42,22 @@ public class Piece {
     }
 
     private void handlePieceClick(MouseEvent event) {
+        // no other piece on the board can be selected
+        if (board.getSelectedPiece() != null && board.getSelectedPiece() != this) {
+            board.getSelectedPiece().deselect(); // Deselect the previously selected piece
+        }
         selected = !selected;
         icon.setOpacity(selected ? 0.6 : 1.0); // Highlight when selected
+        board.setSelectedPiece(this); // Set this piece as the selected piece on the board
         System.out.println((isWhite ? "White " : "Black ") + type + " selected at (" + x + ", " + y + ")");
     }
 
+
+    private void deselect() {
+        selected = false;
+        icon.setOpacity(1.0); // Reset opacity when deselected
+        System.out.println((isWhite ? "White " : "Black ") + type + " deselected at (" + x + ", " + y + ")");
+    }
 
     private ImageView loadImage() {
         String color = isWhite ? "white" : "black";
