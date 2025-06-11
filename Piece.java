@@ -1,3 +1,4 @@
+import javafx.scene.Cursor;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -27,13 +28,15 @@ public class Piece {
         this.file = file;
         this.rank = rank;
         this.icon = loadImage(); // Load the piece image
-        addClickEvent();
         this.board = board; // Set the board reference
         this.position = board.getChessCoordinate(rank, file); // Convert to chess notation
         this.is_selectable = board.isPlayerWhite() == isWhite; // Check if the piece is selectable based on player color
-
         validMoves = new HashSet<>(); // Initialize valid moves set
         updateMoves(); // Initialize valid moves
+        
+        addClickEvent();
+        addHoverEffect();
+
 
     }
 
@@ -48,6 +51,12 @@ public class Piece {
             default -> 0;
         };
     }
+
+    private void addHoverEffect() {
+    if (!is_selectable) return;
+    icon.setOnMouseEntered(event -> icon.setCursor(Cursor.MOVE)); // Show "hand" cursor when hovering
+    icon.setOnMouseExited(event -> icon.setCursor(Cursor.DEFAULT)); // Reset cursor when leaving
+}
 
 
     private void addClickEvent() {
@@ -133,7 +142,7 @@ public class Piece {
         int direction = isWhite ? -1 : 1; // white moves up (-1), black down
         int startRank = isWhite ? 6 : 1; // Starting rank for pawns
         Square fwdOne = board.getSquare(rank + direction, file);
-        if (!fwdOne.isOccupied()) validMoves.add(fwdOne.getPosition()); // Move forward one square
+        if (fwdOne != null && !fwdOne.isOccupied()) validMoves.add(fwdOne.getPosition()); // Move forward one square
         
         if (rank == startRank) { // If on starting rank, can move two squares forward
             Square fwdTwo = board.getSquare(rank + 2 * direction, file);
@@ -143,14 +152,14 @@ public class Piece {
         // capture diagonally
         if (file > 0) { // Check left diagonal
             Square leftCapture = board.getSquare(rank + direction, file - 1);
-            if (leftCapture.isOccupied() && leftCapture.isOpponentPiece(isWhite)) {
+            if (leftCapture != null && leftCapture.isOccupied() && leftCapture.isOpponentPiece(isWhite)) {
                 validMoves.add(leftCapture.getPosition());
             }
         }
 
         if (file < 7) { // Check right diagonal
             Square rightCapture = board.getSquare(rank + direction, file + 1);
-            if (rightCapture.isOccupied() && rightCapture.isOpponentPiece(isWhite)) {
+            if (rightCapture != null && rightCapture.isOccupied() && rightCapture.isOpponentPiece(isWhite)) {
                 validMoves.add(rightCapture.getPosition());
             }
         }

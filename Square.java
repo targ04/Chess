@@ -1,4 +1,5 @@
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -11,12 +12,35 @@ public class Square extends StackPane {
     private static final Color INDICATOR_COLOR = Color.STEELBLUE; // Color for valid move indicators
     private boolean isWhite; // True if the square is white, false if black
     int TILE_SIZE = 80; // Size of each square
+    private boolean isValidforNextMove = false; // Flag to indicate if the square is valid for the next move
 
     public Square(String position) {
         this.position = position;
         this.piece = null;
         setColor();
         setPrefSize(TILE_SIZE, TILE_SIZE); // Set the size of the square
+
+        // add hover effect if the square is a valid square for the next move
+        addHoverEffect();
+    }
+
+    private void addHoverEffect(){
+        this.setOnMouseEntered(event -> {
+            if (isValidforNextMove) {
+                this.setCursor(Cursor.HAND); // Change cursor to hand
+            }
+            else {
+                this.setCursor(Cursor.DEFAULT); // Reset cursor to default
+            }
+        });
+
+        this.setOnMouseExited(event -> {
+            this.setCursor(Cursor.DEFAULT); // Reset cursor to default
+        });
+        this.setOnMouseReleased(event -> {
+            this.setCursor(Cursor.DEFAULT);
+        });
+
     }
 
     private void setColor(){
@@ -67,11 +91,13 @@ public class Square extends StackPane {
         indicator.setOpacity(0.8);
         this.getChildren().add(indicator);
         StackPane.setAlignment(indicator, Pos.CENTER); // Center the indicator in the square
+        isValidforNextMove = true; // Set the flag to indicate this square is valid for the next move
     }
 
     // remove all indicators from the square
     public void clearIndicator() {
         this.getChildren().removeIf(node -> node instanceof Circle); // Remove all indicators
+        isValidforNextMove = false; // Reset the flag
     }
 
 }
