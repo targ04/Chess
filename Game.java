@@ -35,9 +35,10 @@ public class Game extends Application {
     }
 
     private void startGame(String difficulty) {
-        Board board = new Board();
+        // order of creation - Player, AI, Board
+        Player player = new Player("User", false); // Player is White
         AI ai = new AI(difficulty);
-        Player player = new Player("User", true);
+        Board board = new Board(player, ai);
         
 
         System.out.println(player.getName() + " is playing as White.");

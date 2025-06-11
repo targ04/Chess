@@ -6,10 +6,15 @@ public class Board {
     private GridPane gridPane;
     private HashMap<String, Square> squares; // Map squares by chess coordinates (A1, B2, etc.)
     private Piece selectedPiece = null; // Currently selected piece, if any
+    private Player player; // Player object to manage player state
+    private AI ai;
 
-    public Board() {
-        gridPane = new GridPane();
-        squares = new HashMap<>();
+    public Board(Player player, AI ai) {
+        // need to perform following in order
+        this.player = player;
+        this.ai = ai;
+        this.gridPane = new GridPane();
+        this.squares = new HashMap<>();
         initializeBoard();
         placePieces();
     }
@@ -132,4 +137,7 @@ public class Board {
     public int getSize() {
         return SIZE;
     }
-}
+
+    public boolean isPlayerWhite() {
+        return player.isWhite();
+    }}

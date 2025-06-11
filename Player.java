@@ -14,4 +14,6 @@ public class Player {
     public boolean isWhite() {
         return isWhite;
     }
+
+
 }

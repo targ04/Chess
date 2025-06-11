@@ -14,6 +14,7 @@ public class Piece {
     private int ICON_SIZE = 60; // Size of the piece icon
     private boolean selected = false; // Indicates if the piece is selected
     private Board board; // Reference to the board for interaction
+    private Boolean is_selectable;
 
     // set of all valid moves for current position
     private Set<String> validMoves;
@@ -29,6 +30,7 @@ public class Piece {
         addClickEvent();
         this.board = board; // Set the board reference
         this.position = board.getChessCoordinate(rank, file); // Convert to chess notation
+        this.is_selectable = board.isPlayerWhite() == isWhite; // Check if the piece is selectable based on player color
 
         validMoves = new HashSet<>(); // Initialize valid moves set
         updateMoves(); // Initialize valid moves
@@ -53,6 +55,9 @@ public class Piece {
     }
 
     private void handlePieceClick(MouseEvent event) {
+        if (!is_selectable) {
+            return; // If the piece is not selectable, do nothing
+        }
         // no other piece on the board can be selected
         if (board.getSelectedPiece() != null && board.getSelectedPiece() != this) {
             board.getSelectedPiece().deselect(); // Deselect the previously selected piece
@@ -64,14 +69,29 @@ public class Piece {
         // Select this piece
         selected = true;
         updateMoves();
+        showMoveIndicators();
         icon.setOpacity(0.6); // Highlight when selected
         board.setSelectedPiece(this); // Set this piece as the selected piece on the board
         System.out.println((isWhite ? "White " : "Black ") + type + " selected at " + position);
     }
 
+    private void showMoveIndicators() {
+        for (String move : validMoves){
+            Square targetSquare = board.getSquare(move);
+            targetSquare.setIndicator();
+        }
+    }
+
+    private void clearMoveIndicators() {
+        for (String move : validMoves) {
+            Square targetSquare = board.getSquare(move);
+            targetSquare.clearIndicator();
+        }
+    }
 
     protected void deselect() {
         selected = false;
+        clearMoveIndicators(); // Clear move indicators when deselected
         icon.setOpacity(1.0); // Reset opacity when deselected
         board.setSelectedPiece(null);
         System.out.println((isWhite ? "White " : "Black ") + type + " deselected at " + position);
@@ -100,7 +120,6 @@ public class Piece {
         switch (type) {
             case "Pawn" -> calculatePawnMoves();
             case "Knight" -> calculateKnightMoves();
-
             case "Bishop" -> calculateBishopMoves();
             case "Rook" -> calculateRookMoves();
             case "Queen" -> {calculateBishopMoves(); calculateRookMoves();}
@@ -214,7 +233,6 @@ public class Piece {
         selected = false; // Deselect after moving
         icon.setOpacity(1.0); // Reset opacity
         this.position = board.getChessCoordinate(new_R, new_F); // Update position in chess notation
-        updateMoves();
     }
 
     // moveTo method with chess board notation as input
