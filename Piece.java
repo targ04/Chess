@@ -6,16 +6,17 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class Piece {
-    private String type;       // type of piece (Pawn, Knight, Bishop, Rook, Queen, King)
-    private boolean isWhite;   // True for White, False for Black
-    private int value;          // Determines relative importance 
-    private int file, rank;          // Position on the board (x is file, y is rank)
+    private String type; // type of piece (Pawn, Knight, Bishop, Rook, Queen, King)
+    private boolean isWhite; // True for White, False for Black
+    private int value; // Determines relative importance
+    private int file, rank; // Position on the board (x is file, y is rank)
     private String position; // Position in chess notation (e.g., "A1", "B2")
-    private ImageView icon;    // Visual representation of the piece
+    private ImageView icon; // Visual representation of the piece
     private int ICON_SIZE = 60; // Size of the piece icon
     private boolean selected = false; // Indicates if the piece is selected
     private Board board; // Reference to the board for interaction
     private Boolean is_selectable;
+    
 
     // set of all valid moves for current position
     private Set<String> validMoves;
@@ -33,10 +34,9 @@ public class Piece {
         this.is_selectable = board.isPlayerWhite() == isWhite; // Check if the piece is selectable based on player color
         validMoves = new HashSet<>(); // Initialize valid moves set
         updateMoves(); // Initialize valid moves
-        
+
         addClickEvent();
         addHoverEffect();
-
 
     }
 
@@ -47,17 +47,17 @@ public class Piece {
             case "Knight", "Bishop" -> 3;
             case "Rook" -> 5;
             case "Queen" -> 9;
-            case "King" -> 100; // The most valuable piece
+            case "King" -> 100; // temp
             default -> 0;
         };
     }
 
     private void addHoverEffect() {
-    if (!is_selectable) return;
-    icon.setOnMouseEntered(event -> icon.setCursor(Cursor.MOVE)); // Show "hand" cursor when hovering
-    icon.setOnMouseExited(event -> icon.setCursor(Cursor.DEFAULT)); // Reset cursor when leaving
-}
-
+        if (!is_selectable)
+            return;
+        icon.setOnMouseEntered(event -> icon.setCursor(Cursor.MOVE)); // Show "hand" cursor when hovering
+        icon.setOnMouseExited(event -> icon.setCursor(Cursor.DEFAULT)); // Reset cursor when leaving
+    }
 
     private void addClickEvent() {
         icon.setOnMouseClicked(event -> handlePieceClick(event));
@@ -70,8 +70,7 @@ public class Piece {
         // no other piece on the board can be selected
         if (board.getSelectedPiece() != null && board.getSelectedPiece() != this) {
             board.getSelectedPiece().deselect(); // Deselect the previously selected piece
-        }
-        else if (selected) {
+        } else if (selected) {
             deselect(); // Deselect if the same piece is clicked again
             return;
         }
@@ -85,7 +84,7 @@ public class Piece {
     }
 
     private void showMoveIndicators() {
-        for (String move : validMoves){
+        for (String move : validMoves) {
             Square targetSquare = board.getSquare(move);
             targetSquare.setIndicator();
         }
@@ -117,11 +116,7 @@ public class Piece {
         return imageView;
     }
 
-    public ImageView getIcon() {
-        // ICONS are loading properly
-        // System.out.println(icon);
-        return icon;
-    }
+
 
     // Get possible moves based on piece type
     public void updateMoves() {
@@ -131,7 +126,10 @@ public class Piece {
             case "Knight" -> calculateKnightMoves();
             case "Bishop" -> calculateBishopMoves();
             case "Rook" -> calculateRookMoves();
-            case "Queen" -> {calculateBishopMoves(); calculateRookMoves();}
+            case "Queen" -> {
+                calculateBishopMoves();
+                calculateRookMoves();
+            }
             case "King" -> calculateKingMoves();
             default -> calculatePawnMoves();
 
@@ -142,24 +140,26 @@ public class Piece {
         int direction = isWhite ? -1 : 1; // white moves up (-1), black down
         int startRank = isWhite ? 6 : 1; // Starting rank for pawns
         Square fwdOne = board.getSquare(rank + direction, file);
-        if (fwdOne != null && !fwdOne.isOccupied()) validMoves.add(fwdOne.getPosition()); // Move forward one square
-        
+        if (fwdOne != null && !fwdOne.isOccupied())
+            validMoves.add(fwdOne.getPosition()); // Move forward one square
+
         if (rank == startRank) { // If on starting rank, can move two squares forward
             Square fwdTwo = board.getSquare(rank + 2 * direction, file);
-            if (!fwdTwo.isOccupied() && !fwdOne.isOccupied()) validMoves.add(fwdTwo.getPosition());
+            if (!fwdTwo.isOccupied() && !fwdOne.isOccupied())
+                validMoves.add(fwdTwo.getPosition());
         }
 
         // capture diagonally
         if (file > 0) { // Check left diagonal
             Square leftCapture = board.getSquare(rank + direction, file - 1);
-            if (leftCapture != null && leftCapture.isOccupied() && leftCapture.isOpponentPiece(isWhite)) {
+            if (leftCapture != null && leftCapture.isOpponentPiece(isWhite)) {
                 validMoves.add(leftCapture.getPosition());
             }
         }
 
         if (file < 7) { // Check right diagonal
             Square rightCapture = board.getSquare(rank + direction, file + 1);
-            if (rightCapture != null && rightCapture.isOccupied() && rightCapture.isOpponentPiece(isWhite)) {
+            if (rightCapture != null && rightCapture.isOpponentPiece(isWhite)) {
                 validMoves.add(rightCapture.getPosition());
             }
         }
@@ -167,10 +167,11 @@ public class Piece {
     }
 
     void calculateKnightMoves() {
-        // Knight moves in an "L" shape: 2 squares in one direction and 1 square perpendicular
+        // Knight moves in an "L" shape: 2 squares in one direction and 1 square
+        // perpendicular
         int[][] knightMoves = {
-            {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
-            {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
+                { 2, 1 }, { 2, -1 }, { -2, 1 }, { -2, -1 },
+                { 1, 2 }, { 1, -2 }, { -1, 2 }, { -1, -2 }
         };
 
         for (int[] move : knightMoves) {
@@ -184,7 +185,7 @@ public class Piece {
             }
         }
     }
-    
+
     void calculateRookMoves() {
         calculateLinearMoves(1, 0); // down
         calculateLinearMoves(0, 1); // right
@@ -193,15 +194,13 @@ public class Piece {
     }
 
     void calculateLinearMoves(int dRank, int dFile) {
-        
+
         int newRank = rank + dRank;
         int newFile = file + dFile;
-        while (board.isValidSquare(newFile, newRank)){
+        while (board.isValidSquare(newFile, newRank)) {
             Square targetSquare = board.getSquare(newRank, newFile);
-            if (targetSquare.isOccupied()) {
-                if (targetSquare.isOpponentPiece(isWhite)) {
-                    validMoves.add(targetSquare.getPosition()); // Capture
-                }
+            if (targetSquare.isOpponentPiece(isWhite)) {
+                validMoves.add(targetSquare.getPosition()); // Capture
                 break; // Stop if occupied
             }
             validMoves.add(targetSquare.getPosition()); // Add empty square
@@ -209,7 +208,7 @@ public class Piece {
             newFile += dFile;
         }
     }
-    
+
     void calculateBishopMoves() {
         calculateLinearMoves(-1, -1);
         calculateLinearMoves(-1, 1);
@@ -219,8 +218,8 @@ public class Piece {
 
     void calculateKingMoves() {
         int[][] kingMoves = {
-            {1, 0}, {0, 1}, {-1, 0}, {0, -1}, // Horizontal and vertical
-            {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // Diagonal
+                { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 }, // Horizontal and vertical
+                { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } // Diagonal
         };
 
         for (int[] move : kingMoves) {
@@ -239,28 +238,50 @@ public class Piece {
     public void moveTo(int new_F, int new_R) {
         this.file = new_F;
         this.rank = new_R;
-        selected = false; // Deselect after moving
-        icon.setOpacity(1.0); // Reset opacity
         this.position = board.getChessCoordinate(new_R, new_F); // Update position in chess notation
     }
 
     // moveTo method with chess board notation as input
     public void moveTo(String position) {
-        int newX = position.charAt(0) - 'A';
-        int newY = board.getSize() - Character.getNumericValue(position.charAt(1));
-
-        moveTo(newX, newY);
+        this.file = position.charAt(0) - 'A';
+        this.rank = board.getSize() - Character.getNumericValue(position.charAt(1));
+        this.position = position; 
     }
 
-
     // Getters
-    public String getType() { return type; }
-    public boolean isWhite() { return isWhite; }
-    public int getValue() { return rank; }
-    public int getRank() { return rank; }
-    public int getFile() { return file; }
-    public String getPosition() { return position; }
-    public Set<String> getValidMoves() { return validMoves; }
+    public String getType() {
+        return type;
+    }
+
+    public boolean isWhite() {
+        return isWhite;
+    }
+
+    public int getValue() {
+        return rank;
+    }
+
+    public int getRank() {
+        return rank;
+    }
+
+    public int getFile() {
+        return file;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public Set<String> getValidMoves() {
+        return validMoves;
+    }
+
+    public ImageView getIcon() {
+        // ICONS are loading properly
+        // System.out.println(icon);
+        return icon;
+    }
 
     @Override
     public String toString() {
