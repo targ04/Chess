@@ -199,10 +199,13 @@ public class Piece {
         int newFile = file + dFile;
         while (board.isValidSquare(newFile, newRank)) {
             Square targetSquare = board.getSquare(newRank, newFile);
-            if (targetSquare.isOpponentPiece(isWhite)) {
+            if (targetSquare.isOccupied()) {
+                if (targetSquare.isOpponentPiece(isWhite)) {
                 validMoves.add(targetSquare.getPosition()); // Capture
-                break; // Stop if occupied
             }
+                break; // Stop if occupied by own piece
+            }
+
             validMoves.add(targetSquare.getPosition()); // Add empty square
             newRank += dRank;
             newFile += dFile;
