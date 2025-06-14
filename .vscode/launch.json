@@ -3,11 +3,25 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Chess",
+            "request": "launch",
+            "mainClass": "Chess",
+            "projectName": "Chess_b581e787"
+        },
+        {
+            "type": "java",
+            "name": "App",
+            "request": "launch",
+            "mainClass": "App",
+            "projectName": "Chess_b581e787"
+        },
+        {
+            "type": "java",
             "name": "Board",
             "request": "launch",
             "mainClass": "Board",
             "projectName": "Chess_AI_bbc684bc",
-                        "vmArgs": [
+            "vmArgs": [
                 "--module-path",
                 "C:/Program Files/javafx-sdk-21.0.7/lib",
                 "--add-modules",
