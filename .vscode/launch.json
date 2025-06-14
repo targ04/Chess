@@ -3,20 +3,6 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Chess",
-            "request": "launch",
-            "mainClass": "Chess",
-            "projectName": "Chess_b581e787"
-        },
-        {
-            "type": "java",
-            "name": "App",
-            "request": "launch",
-            "mainClass": "App",
-            "projectName": "Chess_b581e787"
-        },
-        {
-            "type": "java",
             "name": "Board",
             "request": "launch",
             "mainClass": "Board",

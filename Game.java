@@ -5,13 +5,16 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class Chess extends Application {
+public class Game extends Application {
     private Stage primaryStage;
     
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        primaryStage.setTitle("Welcome to Chess");
+
+        // this is the box title, change it to whatever you want
+        // it will be displayed in the title bar of the window
+        primaryStage.setTitle("Chess Game");
 
         // Difficulty Selector
         ComboBox<String> difficultyBox = new ComboBox<>();
@@ -26,19 +29,28 @@ public class Chess extends Application {
         VBox layout = new VBox(20, difficultyBox, playButton);
         layout.setStyle("-fx-alignment: center; -fx-padding: 50;");
 
+        // opening page to the game
         primaryStage.setScene(new Scene(layout, 400, 300));
         primaryStage.show();
     }
 
     private void startGame(String difficulty) {
-        Board board = new Board();
+        // order of creation - Player, AI, Board
+        Player player = new Player("User", false); // Player is White
         AI ai = new AI(difficulty);
-        Player player = new Player("User", true);
+        Board board = new Board(player, ai);
+        
 
         System.out.println(player.getName() + " is playing as White.");
         System.out.println(ai.makeMove(board)); // AI makes a move
+        // Piece knight = new Piece("Knight", true, 2, 1);
+        // System.out.println(knight.getPossibleMoves());
+        // System.out.println(knight);
+
 
         primaryStage.setScene(new Scene(board.getBoardLayout(), 640, 640));
+        primaryStage.setResizable(false); // avoids resizing the window
+        primaryStage.setTitle("Chess Game - " + difficulty + " Mode");
     }
 
     public static void main(String[] args) {
