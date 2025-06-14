@@ -33,7 +33,7 @@ public class Piece {
         this.position = board.getChessCoordinate(rank, file); // Convert to chess notation
         this.is_selectable = board.isPlayerWhite() == isWhite; // Check if the piece is selectable based on player color
         validMoves = new HashSet<>(); // Initialize valid moves set
-        updateMoves(); // Initialize valid moves
+
 
         addClickEvent();
         addHoverEffect();
@@ -137,8 +137,8 @@ public class Piece {
     }
 
     void calculatePawnMoves() {
-        int direction = isWhite ? -1 : 1; // white moves up (-1), black down
-        int startRank = isWhite ? 6 : 1; // Starting rank for pawns
+        int direction = isWhite ? 1 : -1; // white moves up (1), black down
+        int startRank = isWhite ? 1 : 6; // Starting rank for pawns
         Square fwdOne = board.getSquare(rank + direction, file);
         if (fwdOne != null && !fwdOne.isOccupied())
             validMoves.add(fwdOne.getPosition()); // Move forward one square
@@ -242,13 +242,16 @@ public class Piece {
         this.file = new_F;
         this.rank = new_R;
         this.position = board.getChessCoordinate(new_R, new_F); // Update position in chess notation
+        System.out.println(board.getFEN());
+    
     }
 
     // moveTo method with chess board notation as input
     public void moveTo(String position) {
         this.file = position.charAt(0) - 'A';
-        this.rank = board.getSize() - Character.getNumericValue(position.charAt(1));
+        this.rank = Character.getNumericValue(position.charAt(1)) - 1;
         this.position = position; 
+        System.out.println(board.getFEN());
     }
 
     // Getters
@@ -289,5 +292,17 @@ public class Piece {
     @Override
     public String toString() {
         return (isWhite ? "White " : "Black ") + type + " at " + position;
+    }
+
+    Character getFENChar() {
+        return switch (type) {
+            case "Pawn" -> isWhite ? 'P' : 'p';
+            case "Knight" -> isWhite ? 'N' : 'n';
+            case "Bishop" -> isWhite ? 'B' : 'b';
+            case "Rook" -> isWhite ? 'R' : 'r';
+            case "Queen" -> isWhite ? 'Q' : 'q';
+            case "King" -> isWhite ? 'K' : 'k';
+            default -> '?'; 
+        };
     }
 }
