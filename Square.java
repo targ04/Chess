@@ -65,6 +65,8 @@ public class Square extends StackPane {
 
     public void setPiece(Piece piece) {
         this.piece = piece;
+        this.getChildren().clear();
+        if (piece == null) return; // No piece to add
         this.getChildren().add(piece.getIcon());
         piece.moveTo(position);
     }

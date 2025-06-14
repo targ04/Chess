@@ -41,7 +41,7 @@ public class Game extends Application {
         Board board = new Board(player, ai);
         
 
-        System.out.println(player.getName() + " is playing as White.");
+        System.out.println(player.getName() + " is playing as " + (player.isWhite() ? "White" : "Black"));
         System.out.println(ai.makeMove(board)); // AI makes a move
         // Piece knight = new Piece("Knight", true, 2, 1);
         // System.out.println(knight.getPossibleMoves());
