@@ -39,6 +39,10 @@ public class Move {
         toSquare.setPiece(movedPiece);
         movedPiece.moveTo(toPosition);
 
+        // reset the moves for the moved piece and player
+        
+
+
         
 
         // Handle special moves like en passant, castling, or promotion if needed
@@ -59,7 +63,7 @@ public class Move {
 
     private void handleEnPassant() {
         if (isEnPassant){
-            
+
         }
     }
 

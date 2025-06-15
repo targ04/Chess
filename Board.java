@@ -40,6 +40,7 @@ public class Board {
         this.game = game;
         initializeBoard();
         placePieces();
+        initialize_moves();
     }
 
     /**
@@ -104,23 +105,50 @@ public class Board {
         if (selectedPiece == null)
             return; // No piece selected yet
 
-        Square oldSquare = getSquare(selectedPiece.getRank(), selectedPiece.getFile());
-        Square newSquare = getSquare(position);
+        // Only allow moves for the current player's pieces
+        if (selectedPiece.isWhite() != isWhiteTurn)
+            return;
 
-        if (newSquare == oldSquare)
-            return; // Clicked same square
-        if (newSquare.isOccupied() && newSquare.getPiece().isWhite() == selectedPiece.isWhite())
-            return; // Same-color capture
+        if (!getPlayerTurn().canPlayerMove(selectedPiece, position)) {
+            return; // Invalid move for the selected piece
+        }
 
-        if (!selectedPiece.getValidMoves().contains(position))
-            return; // Invalid move
+        Move move = getPlayerTurn().getPossibleMovesToPos().get(position).stream()
+                .filter(m -> m.getMovedPiece().equals(selectedPiece))
+                .findFirst()
+                .orElse(null);
 
-        // Move piece visually and logically
-        // create a move
-        Move move = new Move(oldSquare.getPosition(), position, selectedPiece, newSquare.getPiece(), this);
+        if (move == null) {return;}
         move.execute();
         game.addMove(move); // Add to game history
         selectedPiece.deselect(); // Deselect after move
+        switchTurnAndUpdateMoves();
+    }
+
+    private void initialize_moves(){
+        // Reset moves for both players
+        whitePlayer.resetMoves();
+        blackPlayer.resetMoves();
+        for (Piece p : whitePlayer.getPiecesOnBoard()) {
+            p.updateMoves();
+        }
+        for (Piece p : blackPlayer.getPiecesOnBoard()) {
+            p.updateMoves();
+        }
+    }
+
+    private void switchTurnAndUpdateMoves() {
+        isWhiteTurn = !isWhiteTurn;
+        // Reset and update possible moves for both players
+        whitePlayer.resetMoves();
+        blackPlayer.resetMoves();
+        for (Piece p : whitePlayer.getPiecesOnBoard()) {
+            p.updateMoves();
+        }
+        for (Piece p : blackPlayer.getPiecesOnBoard()) {
+            p.updateMoves();
+        }
+        if (isWhiteTurn) fullMoveNumber ++;
     }
 
     /**

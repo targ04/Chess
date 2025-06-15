@@ -23,7 +23,7 @@ public class Piece {
     private boolean selected = false; // True if piece is selected
     private Board board; // Reference to the board for interaction
 
-    private Set<Move> validMoves; // All legal destination squares for this piece
+    private Set<Move> validMoves; // All legal moves for this piece
     private boolean hasMoved = false; // whether king has moved or not, checks for castling
 
     // Constructor to initialize all required fields and setup visuals
@@ -60,12 +60,11 @@ public class Piece {
 
     // Adds a hand cursor effect when the mouse hovers over a selectable piece
     private void addHoverEffect() {
-        if (!isSelectable())
-            return;
-
-        icon.setOnMouseEntered(e -> icon.setCursor(Cursor.MOVE));
-        icon.setOnMouseExited(e -> icon.setCursor(Cursor.DEFAULT));
-    }
+    icon.setOnMouseEntered(e -> {
+        icon.setCursor(isSelectable() ? Cursor.MOVE : Cursor.DEFAULT);
+    });
+    icon.setOnMouseExited(e -> icon.setCursor(Cursor.DEFAULT));
+}
 
     // Attaches click logic to the piece
     private void addClickEvent() {
@@ -88,7 +87,6 @@ public class Piece {
 
         // Select this piece
         selected = true;
-        updateMoves(); // Update validMoves based on current position
         showMoveIndicators(); // Show visual hints on valid target squares
         icon.setOpacity(0.6); // Make it look selected
         board.setSelectedPiece(this);
