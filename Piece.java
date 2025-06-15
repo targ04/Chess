@@ -1,9 +1,12 @@
 import javafx.scene.Cursor;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents a chess piece (Pawn, Knight, Bishop, etc.)
@@ -242,12 +245,40 @@ public class Piece {
         }
     }
 
+    private void promotePawn(String newType) {
+        this.type = newType;
+        this.value = assignValue(newType);
+        this.icon.setImage(new Image(getClass().getResource(
+                "/resources/icons/" + (isWhite ? "white" : "black") + "_" + newType.toLowerCase() + ".png")
+                .toString()));
+
+        System.out.println((isWhite ? "White" : "Black") + " pawn promoted to " + newType + " at " + position);
+    }
+
+    // give choice to user for pawn promotion
+    private void promotePawnWithChoice() {
+        List<String> choices = List.of("Queen", "Rook", "Bishop", "Knight");
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", choices);
+        dialog.setTitle("Pawn Promotion");
+        dialog.setHeaderText("Choose a piece to promote your pawn to:");
+        dialog.setContentText("Promote to:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(this::promotePawn); // Call promotePawn with user choice
+    }
+
     // ------------------ Movement & Metadata ------------------
 
     public void moveTo(int newF, int newR) {
         this.file = newF;
         this.rank = newR;
         this.position = board.getChessCoordinate(newR, newF);
+        // Check for promotion
+        if (type.equals("Pawn") && (rank == 7 || rank == 0)) {
+            promotePawnWithChoice();
+            ; // Default to Queen for now
+        }
         System.out.println(board.getFEN());
     }
 
