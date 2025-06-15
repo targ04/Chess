@@ -4,56 +4,71 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
+/**
+ * Square class represents a single tile on the chess board.
+ * It handles piece placement, styling, hover effects, and move indicators.
+ */
 public class Square extends StackPane {
-    private final String position; // e.g., "A1"
-    private Piece piece;           // The piece currently on this square, or null
+    private final String position; // Chess coordinate like "A1", "E4", etc.
+    private Piece piece; // The piece currently occupying this square
     private static final String WHITE_COLOR = "-fx-background-color:rgb(222, 182, 135);"; // Light brown
     private static final String BLACK_COLOR = "-fx-background-color:rgb(140, 68, 20);"; // Dark brown
     private static final Color INDICATOR_COLOR = Color.STEELBLUE; // Color for valid move indicators
-    private boolean isWhite; // True if the square is white, false if black
-    int TILE_SIZE = 80; // Size of each square
-    private boolean isValidforNextMove = false; // Flag to indicate if the square is valid for the next move
 
+    private boolean isWhite; // True if square is a white tile
+    private final int TILE_SIZE = 80; // Size (in px) of each square
+    private boolean isValidforNextMove = false; // Indicates if this square is valid for a potential move
+
+    /**
+     * Constructor initializes the square's position, background color,
+     * size, and adds hover interactivity.
+     */
     public Square(String position) {
         this.position = position;
         this.piece = null;
-        setColor();
-        setPrefSize(TILE_SIZE, TILE_SIZE); // Set the size of the square
+        setColor(); // Sets tile color based on its coordinates
+        setPrefSize(TILE_SIZE, TILE_SIZE); // Set visual size
 
-        // add hover effect if the square is a valid square for the next move
-        addHoverEffect();
+        addHoverEffect(); // Adds cursor change when hovered
     }
 
-    private void addHoverEffect(){
+    /**
+     * Adds a visual cursor effect when hovering over a valid move square.
+     */
+    private void addHoverEffect() {
         this.setOnMouseEntered(event -> {
+            // If the square is a valid destination, change cursor
             if (isValidforNextMove) {
-                this.setCursor(Cursor.HAND); // Change cursor to hand
-            }
-            else {
-                this.setCursor(Cursor.DEFAULT); // Reset cursor to default
+                this.setCursor(Cursor.HAND);
+            } else {
+                this.setCursor(Cursor.DEFAULT);
             }
         });
 
-        this.setOnMouseExited(event -> {
-            this.setCursor(Cursor.DEFAULT); // Reset cursor to default
-        });
-        this.setOnMouseReleased(event -> {
-            this.setCursor(Cursor.DEFAULT);
-        });
-
+        // Always reset the cursor on exit or mouse release
+        this.setOnMouseExited(event -> this.setCursor(Cursor.DEFAULT));
+        this.setOnMouseReleased(event -> this.setCursor(Cursor.DEFAULT));
     }
 
-    private void setColor(){
-        int row = position.charAt(1) - '1'; // Convert '1'-'8' to 0-7
-        int col = position.charAt(0) - 'A'; // Convert 'A'-'H' to 0-7
+    /**
+     * Sets the background color of the square based on its position
+     * to alternate between white and black tiles.
+     */
+    private void setColor() {
+        int row = position.charAt(1) - '1'; // e.g., '1' → 0
+        int col = position.charAt(0) - 'A'; // e.g., 'A' → 0
+
+        // Color alternates like a checkerboard
         if ((row + col) % 2 == 1) {
-            setStyle(WHITE_COLOR); // Light color
-            isWhite = true; // This square is white
+            setStyle(WHITE_COLOR);
+            isWhite = true;
         } else {
-            setStyle(BLACK_COLOR); // Dark color
-            isWhite = false; // This square is black
+            setStyle(BLACK_COLOR);
+            isWhite = false;
         }
     }
+
+    // --------------------- Getters & Setters -----------------------
 
     public String getPosition() {
         return position;
@@ -63,43 +78,67 @@ public class Square extends StackPane {
         return piece;
     }
 
+    /**
+     * Places a piece on this square and updates visuals.
+     */
     public void setPiece(Piece piece) {
         this.piece = piece;
-        this.getChildren().clear();
-        if (piece == null) return; // No piece to add
-        this.getChildren().add(piece.getIcon());
-        piece.moveTo(position);
+        this.getChildren().clear(); // Clear any previous visuals
+
+        if (piece == null)
+            return; // Do not add null
+
+        this.getChildren().add(piece.getIcon()); // Add the piece icon
+        piece.moveTo(position); // Update the piece's position state
     }
 
+    /**
+     * Returns true if this square contains a piece.
+     */
     public boolean isOccupied() {
         return piece != null;
     }
 
+    /**
+     * Removes any piece from this square (both logic and GUI).
+     */
     public void removePiece() {
         this.piece = null;
-        this.getChildren().clear(); // Remove the piece icon from the square
+        this.getChildren().clear(); // Also remove the visual icon
     }
 
-    // return whether the square is an opponent's piece
+    /**
+     * Checks if this square contains an opponent's piece.
+     * 
+     * @param isWhite current player's color
+     * @return true if occupied by an opponent
+     */
     public boolean isOpponentPiece(boolean isWhite) {
         return piece != null && piece.isWhite() != isWhite;
     }
 
-    // set small circular indicator for valid moves
-    public void setIndicator(){
-        Circle indicator = new Circle(7, INDICATOR_COLOR);
-        indicator.setStroke(INDICATOR_COLOR);
+    // --------------------- Visual Indicators -----------------------
+
+    /**
+     * Displays a circular dot in the center to show a valid move.
+     */
+    public void setIndicator() {
+        Circle indicator = new Circle(7, INDICATOR_COLOR); // Dot radius and color
+        indicator.setStroke(INDICATOR_COLOR); // Outline
         indicator.setStrokeWidth(4);
         indicator.setOpacity(0.8);
-        this.getChildren().add(indicator);
-        StackPane.setAlignment(indicator, Pos.CENTER); // Center the indicator in the square
-        isValidforNextMove = true; // Set the flag to indicate this square is valid for the next move
+
+        this.getChildren().add(indicator); // Add to square
+        StackPane.setAlignment(indicator, Pos.CENTER); // Center it visually
+
+        isValidforNextMove = true; // Mark this square as a valid move
     }
 
-    // remove all indicators from the square
+    /**
+     * Clears any move indicator visuals from the square.
+     */
     public void clearIndicator() {
-        this.getChildren().removeIf(node -> node instanceof Circle); // Remove all indicators
+        this.getChildren().removeIf(node -> node instanceof Circle);
         isValidforNextMove = false; // Reset the flag
     }
-
 }
