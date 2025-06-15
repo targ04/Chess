@@ -247,4 +247,12 @@ public class Board {
     public boolean isPlayerWhite() {
         return player.isWhite();
     }
+
+    public Piece getPieceAt(int file, int rank) {
+        if (!isValidSquare(file, rank))
+            return null;
+        Square sq = getSquare(rank, file); // Note: rank, file order here is important
+        return sq.isOccupied() ? sq.getPiece() : null;
+    }
+
 }
