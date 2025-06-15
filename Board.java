@@ -247,4 +247,11 @@ public class Board {
     public boolean isPlayerWhite() {
         return player.isWhite();
     }
+
+    public void setEnPassantTargetSquare(Square square) {
+        this.enPassantTargetSquare = square;
+    }
+    public Square getEnPassantTargetSquare() {
+        return enPassantTargetSquare;
+    }
 }
