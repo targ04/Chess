@@ -1,9 +1,12 @@
 import javafx.scene.Cursor;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents a chess piece (Pawn, Knight, Bishop, etc.)
@@ -21,6 +24,7 @@ public class Piece {
     private Board board; // Reference to the board for interaction
 
     private Set<String> validMoves; // All legal destination squares for this piece
+    private boolean hasMoved = false; // whether king has moved or not, checks for castling
 
     // Constructor to initialize all required fields and setup visuals
     public Piece(String type, boolean isWhite, int file, int rank, Board board) {
@@ -219,6 +223,40 @@ public class Piece {
                     validMoves.add(sq.getPosition());
             }
         }
+        // ---------------- Castling ----------------
+        if (hasMoved)
+            return; // King has moved
+
+        // Kingside Castling
+        if (canCastle(file, rank, 7)) {
+            validMoves.add(board.getChessCoordinate(rank, 6)); // g1/g8
+        }
+
+        // Queenside Castling
+        if (canCastle(file, rank, 0)) {
+            validMoves.add(board.getChessCoordinate(rank, 2)); // c1/c8
+        }
+    }
+
+    private boolean canCastle(int kingFile, int kingRank, int rookFile) {
+        Piece rook = board.getPieceAt(kingRank, rookFile);
+        if (rook == null || !rook.getType().equals("Rook") || rook.hasMoved())
+            return false;
+
+        int direction = (rookFile == 0) ? -1 : 1;
+        int start = kingFile + direction;
+        int end = rookFile;
+
+        // Check squares between king and rook are empty
+        for (int f = start; f != end; f += direction) {
+            if (board.getPieceAt(kingRank, f) != null)
+                return false;
+        }
+
+        // TODO: Check if king is in check or crosses check
+        // Skipped for now
+
+        return true;
     }
 
     /**
@@ -241,12 +279,39 @@ public class Piece {
         }
     }
 
+    private void promotePawn(String newType) {
+        this.type = newType;
+        this.value = assignValue(newType);
+        this.icon.setImage(new Image(getClass().getResource(
+                "/resources/icons/" + (isWhite ? "white" : "black") + "_" + newType.toLowerCase() + ".png")
+                .toString()));
+
+        System.out.println((isWhite ? "White" : "Black") + " pawn promoted to " + newType + " at " + position);
+    }
+
+    // give choice to user for pawn promotion
+    private void promotePawnWithChoice() {
+        List<String> choices = List.of("Queen", "Rook", "Bishop", "Knight");
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", choices);
+        dialog.setTitle("Pawn Promotion");
+        dialog.setHeaderText("Choose a piece to promote your pawn to:");
+        dialog.setContentText("Promote to:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(this::promotePawn); // Call promotePawn with user choice
+    }
+
     // ------------------ Movement & Metadata ------------------
 
     public void moveTo(int newF, int newR) {
         this.file = newF;
         this.rank = newR;
         this.position = board.getChessCoordinate(newR, newF);
+        // Check for promotion
+        if (type.equals("Pawn") && (rank == 7 || rank == 0)) {
+            promotePawnWithChoice();
+        }
         System.out.println(board.getFEN());
     }
 
@@ -254,7 +319,12 @@ public class Piece {
         this.file = pos.charAt(0) - 'A';
         this.rank = Character.getNumericValue(pos.charAt(1)) - 1;
         this.position = pos;
+        // Check for promotion
+        if (type.equals("Pawn") && (rank == 7 || rank == 0)) {
+            promotePawnWithChoice();
+        }
         System.out.println(board.getFEN());
+
     }
 
     // ------------------ Getters ------------------
@@ -289,6 +359,14 @@ public class Piece {
 
     public ImageView getIcon() {
         return icon;
+    }
+
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
+    public void setMoved(boolean moved) {
+        this.hasMoved = moved;
     }
 
     @Override
