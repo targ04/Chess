@@ -117,12 +117,9 @@ public class Board {
 
         // Move piece visually and logically
         // create a move
-        Move move = new Move(oldSquare.getPosition(), position, selectedPiece, newSquare.getPiece());
-        oldSquare.removePiece();
-        newSquare.setPiece(selectedPiece);
-
-        System.out.println(selectedPiece.getType() + " to " + position);
-
+        Move move = new Move(oldSquare.getPosition(), position, selectedPiece, newSquare.getPiece(), this);
+        move.execute();
+        game.addMove(move); // Add to game history
         selectedPiece.deselect(); // Deselect after move
     }
 
