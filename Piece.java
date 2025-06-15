@@ -5,120 +5,133 @@ import javafx.scene.input.MouseEvent;
 import java.util.Set;
 import java.util.HashSet;
 
+/**
+ * Represents a chess piece (Pawn, Knight, Bishop, etc.)
+ * Handles its behavior, movement, interaction, and appearance.
+ */
 public class Piece {
-    private String type; // type of piece (Pawn, Knight, Bishop, Rook, Queen, King)
-    private boolean isWhite; // True for White, False for Black
-    private int value; // Determines relative importance
-    private int file, rank; // Position on the board (x is file, y is rank)
-    private String position; // Position in chess notation (e.g., "A1", "B2")
-    private ImageView icon; // Visual representation of the piece
-    private int ICON_SIZE = 60; // Size of the piece icon
-    private boolean selected = false; // Indicates if the piece is selected
+    private String type; // Piece type: Pawn, Knight, etc.
+    private boolean isWhite; // True = white piece, False = black piece
+    private int value; // Value used for prioritizing captures (e.g., Queen > Pawn)
+    private int file, rank; // File = column (0-7), rank = row (0-7)
+    private String position; // Chess notation (e.g., "E2")
+    private ImageView icon; // GUI image for the piece
+    private int ICON_SIZE = 60; // Icon size in pixels
+    private boolean selected = false; // True if piece is selected
     private Board board; // Reference to the board for interaction
-    private Boolean is_selectable;
-    
+    private Boolean is_selectable;// Is this piece allowed to be selected on this turn?
 
-    // set of all valid moves for current position
-    private Set<String> validMoves;
+    private Set<String> validMoves; // All legal destination squares for this piece
 
-    // Constructor
+    // Constructor to initialize all required fields and setup visuals
     public Piece(String type, boolean isWhite, int file, int rank, Board board) {
         this.type = type;
         this.isWhite = isWhite;
         this.value = assignValue(type);
         this.file = file;
         this.rank = rank;
-        this.icon = loadImage(); // Load the piece image
-        this.board = board; // Set the board reference
-        this.position = board.getChessCoordinate(rank, file); // Convert to chess notation
-        this.is_selectable = board.isPlayerWhite() == isWhite; // Check if the piece is selectable based on player color
-        validMoves = new HashSet<>(); // Initialize valid moves set
-        updateMoves(); // Initialize valid moves
+        this.board = board;
+        this.position = board.getChessCoordinate(rank, file);
+        this.is_selectable = board.isPlayerWhite() == isWhite;
+        this.icon = loadImage(); // Load the correct piece image
+        this.validMoves = new HashSet<>();
 
-        addClickEvent();
-        addHoverEffect();
-
+        addClickEvent(); // Allow clicking the piece
+        addHoverEffect(); // Show hand cursor on hover
     }
 
-    // Assign rank values based on piece type
+    /**
+     * Assigns a numeric value to the piece for prioritizing during AI or
+     * evaluations.
+     */
     private int assignValue(String type) {
         return switch (type) {
             case "Pawn" -> 1;
             case "Knight", "Bishop" -> 3;
             case "Rook" -> 5;
             case "Queen" -> 9;
-            case "King" -> 100; // temp
+            case "King" -> 100; // King is invaluable
             default -> 0;
         };
     }
 
+    // Adds a hand cursor effect when the mouse hovers over a selectable piece
     private void addHoverEffect() {
         if (!is_selectable)
             return;
-        icon.setOnMouseEntered(event -> icon.setCursor(Cursor.MOVE)); // Show "hand" cursor when hovering
-        icon.setOnMouseExited(event -> icon.setCursor(Cursor.DEFAULT)); // Reset cursor when leaving
+
+        icon.setOnMouseEntered(e -> icon.setCursor(Cursor.MOVE));
+        icon.setOnMouseExited(e -> icon.setCursor(Cursor.DEFAULT));
     }
 
+    // Attaches click logic to the piece
     private void addClickEvent() {
-        icon.setOnMouseClicked(event -> handlePieceClick(event));
+        icon.setOnMouseClicked(this::handlePieceClick);
     }
 
+    /**
+     * Handles what happens when a piece is clicked
+     */
     private void handlePieceClick(MouseEvent event) {
-        if (!is_selectable) {
-            return; // If the piece is not selectable, do nothing
-        }
-        // no other piece on the board can be selected
+        if (!is_selectable)
+            return;
+
         if (board.getSelectedPiece() != null && board.getSelectedPiece() != this) {
-            board.getSelectedPiece().deselect(); // Deselect the previously selected piece
+            board.getSelectedPiece().deselect();
         } else if (selected) {
-            deselect(); // Deselect if the same piece is clicked again
+            deselect();
             return;
         }
+
         // Select this piece
         selected = true;
-        updateMoves();
-        showMoveIndicators();
-        icon.setOpacity(0.6); // Highlight when selected
-        board.setSelectedPiece(this); // Set this piece as the selected piece on the board
+        updateMoves(); // Update validMoves based on current position
+        showMoveIndicators(); // Show visual hints on valid target squares
+        icon.setOpacity(0.6); // Make it look selected
+        board.setSelectedPiece(this);
+
         System.out.println((isWhite ? "White " : "Black ") + type + " selected at " + position);
     }
 
+    // Displays blue dots on all valid move squares
     private void showMoveIndicators() {
         for (String move : validMoves) {
-            Square targetSquare = board.getSquare(move);
-            targetSquare.setIndicator();
+            board.getSquare(move).setIndicator();
         }
     }
 
+    // Clears any move indicators from the board
     private void clearMoveIndicators() {
         for (String move : validMoves) {
-            Square targetSquare = board.getSquare(move);
-            targetSquare.clearIndicator();
+            board.getSquare(move).clearIndicator();
         }
     }
 
+    /**
+     * Deselects the piece, removing highlight and indicators
+     */
     protected void deselect() {
         selected = false;
-        clearMoveIndicators(); // Clear move indicators when deselected
-        icon.setOpacity(1.0); // Reset opacity when deselected
+        clearMoveIndicators();
+        icon.setOpacity(1.0); // Reset visual opacity
         board.setSelectedPiece(null);
         System.out.println((isWhite ? "White " : "Black ") + type + " deselected at " + position);
     }
 
+    // Loads the correct image based on color and type (e.g., white_pawn.png)
     private ImageView loadImage() {
         String color = isWhite ? "white" : "black";
-        String imagePath = "/resources/icons/" + color + "_" + type.toLowerCase() + ".png";
-        Image pieceImage = new Image(getClass().getResource(imagePath).toString());
-        ImageView imageView = new ImageView(pieceImage);
-        imageView.setFitWidth(ICON_SIZE);
-        imageView.setFitHeight(ICON_SIZE);
-        imageView.setPreserveRatio(true);
-        return imageView;
+        String path = "/resources/icons/" + color + "_" + type.toLowerCase() + ".png";
+        Image img = new Image(getClass().getResource(path).toString());
+        ImageView imgView = new ImageView(img);
+        imgView.setFitWidth(ICON_SIZE);
+        imgView.setFitHeight(ICON_SIZE);
+        imgView.setPreserveRatio(true);
+        return imgView;
     }
 
+    // ------------------ Move Calculations by Piece Type ------------------
 
-
-    // Get possible moves based on piece type
     public void updateMoves() {
         validMoves.clear();
         switch (type) {
@@ -131,127 +144,122 @@ public class Piece {
                 calculateRookMoves();
             }
             case "King" -> calculateKingMoves();
-            default -> calculatePawnMoves();
-
-        };
+        }
     }
 
-    void calculatePawnMoves() {
-        int direction = isWhite ? -1 : 1; // white moves up (-1), black down
-        int startRank = isWhite ? 6 : 1; // Starting rank for pawns
-        Square fwdOne = board.getSquare(rank + direction, file);
-        if (fwdOne != null && !fwdOne.isOccupied())
-            validMoves.add(fwdOne.getPosition()); // Move forward one square
+    private void calculatePawnMoves() {
+        int dir = isWhite ? 1 : -1;
+        int startRank = isWhite ? 1 : 6;
 
-        if (rank == startRank) { // If on starting rank, can move two squares forward
-            Square fwdTwo = board.getSquare(rank + 2 * direction, file);
-            if (!fwdTwo.isOccupied() && !fwdOne.isOccupied())
+        Square fwdOne = board.getSquare(rank + dir, file);
+        if (fwdOne != null && !fwdOne.isOccupied())
+            validMoves.add(fwdOne.getPosition());
+
+        if (rank == startRank) {
+            Square fwdTwo = board.getSquare(rank + 2 * dir, file);
+            if (fwdTwo != null && !fwdTwo.isOccupied() && !fwdOne.isOccupied())
                 validMoves.add(fwdTwo.getPosition());
         }
 
-        // capture diagonally
-        if (file > 0) { // Check left diagonal
-            Square leftCapture = board.getSquare(rank + direction, file - 1);
-            if (leftCapture != null && leftCapture.isOpponentPiece(isWhite)) {
-                validMoves.add(leftCapture.getPosition());
-            }
+        // Diagonal captures
+        if (file > 0) {
+            Square leftCap = board.getSquare(rank + dir, file - 1);
+            if (leftCap != null && leftCap.isOpponentPiece(isWhite))
+                validMoves.add(leftCap.getPosition());
         }
 
-        if (file < 7) { // Check right diagonal
-            Square rightCapture = board.getSquare(rank + direction, file + 1);
-            if (rightCapture != null && rightCapture.isOpponentPiece(isWhite)) {
-                validMoves.add(rightCapture.getPosition());
-            }
+        if (file < 7) {
+            Square rightCap = board.getSquare(rank + dir, file + 1);
+            if (rightCap != null && rightCap.isOpponentPiece(isWhite))
+                validMoves.add(rightCap.getPosition());
         }
-
     }
 
-    void calculateKnightMoves() {
-        // Knight moves in an "L" shape: 2 squares in one direction and 1 square
-        // perpendicular
-        int[][] knightMoves = {
+    private void calculateKnightMoves() {
+        int[][] moves = {
                 { 2, 1 }, { 2, -1 }, { -2, 1 }, { -2, -1 },
                 { 1, 2 }, { 1, -2 }, { -1, 2 }, { -1, -2 }
         };
 
-        for (int[] move : knightMoves) {
-            int newFile = file + move[0];
-            int newRank = rank + move[1];
+        for (int[] m : moves) {
+            int newFile = file + m[0], newRank = rank + m[1];
             if (board.isValidSquare(newFile, newRank)) {
-                Square targetSquare = board.getSquare(newRank, newFile);
-                if (!targetSquare.isOccupied() || targetSquare.isOpponentPiece(isWhite)) {
-                    validMoves.add(targetSquare.getPosition());
+                Square sq = board.getSquare(newRank, newFile);
+                if (!sq.isOccupied() || sq.isOpponentPiece(isWhite)) {
+                    validMoves.add(sq.getPosition());
                 }
             }
         }
     }
 
-    void calculateRookMoves() {
+    private void calculateRookMoves() {
         calculateLinearMoves(1, 0); // down
         calculateLinearMoves(0, 1); // right
         calculateLinearMoves(-1, 0); // up
         calculateLinearMoves(0, -1); // left
     }
 
-    void calculateLinearMoves(int dRank, int dFile) {
-
-        int newRank = rank + dRank;
-        int newFile = file + dFile;
-        while (board.isValidSquare(newFile, newRank)) {
-            Square targetSquare = board.getSquare(newRank, newFile);
-            if (targetSquare.isOccupied()) {
-                if (targetSquare.isOpponentPiece(isWhite)) {
-                validMoves.add(targetSquare.getPosition()); // Capture
-            }
-                break; // Stop if occupied by own piece
-            }
-
-            validMoves.add(targetSquare.getPosition()); // Add empty square
-            newRank += dRank;
-            newFile += dFile;
-        }
+    private void calculateBishopMoves() {
+        calculateLinearMoves(-1, -1); // up-left
+        calculateLinearMoves(-1, 1); // up-right
+        calculateLinearMoves(1, -1); // down-left
+        calculateLinearMoves(1, 1); // down-right
     }
 
-    void calculateBishopMoves() {
-        calculateLinearMoves(-1, -1);
-        calculateLinearMoves(-1, 1);
-        calculateLinearMoves(1, -1);
-        calculateLinearMoves(1, 1);
-    }
-
-    void calculateKingMoves() {
-        int[][] kingMoves = {
-                { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 }, // Horizontal and vertical
-                { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } // Diagonal
+    private void calculateKingMoves() {
+        int[][] moves = {
+                { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 },
+                { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 }
         };
 
-        for (int[] move : kingMoves) {
-            int newFile = file + move[0];
-            int newRank = rank + move[1];
-            if (board.isValidSquare(newFile, newRank)) {
-                Square targetSquare = board.getSquare(newRank, newFile);
-                if (!targetSquare.isOccupied() || targetSquare.isOpponentPiece(isWhite)) {
-                    validMoves.add(targetSquare.getPosition());
-                }
+        for (int[] move : moves) {
+            int newF = file + move[0], newR = rank + move[1];
+            if (board.isValidSquare(newF, newR)) {
+                Square sq = board.getSquare(newR, newF);
+                if (!sq.isOccupied() || sq.isOpponentPiece(isWhite))
+                    validMoves.add(sq.getPosition());
             }
         }
     }
 
-    // Update position
-    public void moveTo(int new_F, int new_R) {
-        this.file = new_F;
-        this.rank = new_R;
-        this.position = board.getChessCoordinate(new_R, new_F); // Update position in chess notation
+    /**
+     * Handles movement along straight or diagonal paths (used by rook, bishop,
+     * queen)
+     */
+    private void calculateLinearMoves(int dR, int dF) {
+        int newR = rank + dR;
+        int newF = file + dF;
+        while (board.isValidSquare(newF, newR)) {
+            Square sq = board.getSquare(newR, newF);
+            if (sq.isOccupied()) {
+                if (sq.isOpponentPiece(isWhite))
+                    validMoves.add(sq.getPosition());
+                break;
+            }
+            validMoves.add(sq.getPosition());
+            newR += dR;
+            newF += dF;
+        }
     }
 
-    // moveTo method with chess board notation as input
-    public void moveTo(String position) {
-        this.file = position.charAt(0) - 'A';
-        this.rank = board.getSize() - Character.getNumericValue(position.charAt(1));
-        this.position = position; 
+    // ------------------ Movement & Metadata ------------------
+
+    public void moveTo(int newF, int newR) {
+        this.file = newF;
+        this.rank = newR;
+        this.position = board.getChessCoordinate(newR, newF);
+        System.out.println(board.getFEN());
     }
 
-    // Getters
+    public void moveTo(String pos) {
+        this.file = pos.charAt(0) - 'A';
+        this.rank = Character.getNumericValue(pos.charAt(1)) - 1;
+        this.position = pos;
+        System.out.println(board.getFEN());
+    }
+
+    // ------------------ Getters ------------------
+
     public String getType() {
         return type;
     }
@@ -261,7 +269,7 @@ public class Piece {
     }
 
     public int getValue() {
-        return rank;
+        return value;
     }
 
     public int getRank() {
@@ -281,13 +289,24 @@ public class Piece {
     }
 
     public ImageView getIcon() {
-        // ICONS are loading properly
-        // System.out.println(icon);
         return icon;
     }
 
     @Override
     public String toString() {
         return (isWhite ? "White " : "Black ") + type + " at " + position;
+    }
+
+    // Returns piece symbol in FEN notation
+    Character getFENChar() {
+        return switch (type) {
+            case "Pawn" -> isWhite ? 'P' : 'p';
+            case "Knight" -> isWhite ? 'N' : 'n';
+            case "Bishop" -> isWhite ? 'B' : 'b';
+            case "Rook" -> isWhite ? 'R' : 'r';
+            case "Queen" -> isWhite ? 'Q' : 'q';
+            case "King" -> isWhite ? 'K' : 'k';
+            default -> '?';
+        };
     }
 }

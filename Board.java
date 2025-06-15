@@ -1,143 +1,250 @@
 import javafx.scene.layout.GridPane;
 import java.util.HashMap;
 
+/**
+ * The Board class represents the chess board and manages all its logic,
+ * including square setup, piece placement, movement, and FEN generation.
+ */
 public class Board {
-    private static final int SIZE = 8; // board size
-    private GridPane gridPane;
-    private HashMap<String, Square> squares; // Map squares by chess coordinates (A1, B2, etc.)
-    private Piece selectedPiece = null; // Currently selected piece, if any
-    private Player player; // Player object to manage player state
-    private AI ai;
+    private static final int SIZE = 8; // Standard chess board is 8x8
+    private GridPane gridPane; // JavaFX layout for GUI representation
+    private HashMap<String, Square> squares; // Map of positions (e.g. "E2") to Square objects
+    private Piece selectedPiece = null; // Currently selected piece for movement
+    private Player player; // Current human player
+    private AI ai; // Opponent AI (if implemented)
 
+    // Castling rights
+    private boolean canWhiteCastleKingside = true;
+    private boolean canWhiteCastleQueenside = true;
+    private boolean canBlackCastleKingside = true;
+    private boolean canBlackCastleQueenside = true;
+
+    // En passant state
+    private Square enPassantTargetSquare = null;
+
+    // Clock for 50-move rule and full move count
+    private int halfMoveClock = 0;
+    private int fullMoveNumber = 1;
+
+    /**
+     * Constructor initializes the board with player and AI references,
+     * builds the grid and places pieces.
+     */
     public Board(Player player, AI ai) {
-        // need to perform following in order
         this.player = player;
         this.ai = ai;
         this.gridPane = new GridPane();
         this.squares = new HashMap<>();
-        initializeBoard();
-        placePieces();
+        initializeBoard(); // Set up empty squares
+        placePieces(); // Add pieces to starting positions
     }
 
+    /**
+     * Sets up the gridPane with Square objects and binds click events.
+     */
     private void initializeBoard() {
         for (int file = 0; file < SIZE; file++) {
             for (int rank = 0; rank < SIZE; rank++) {
-                // get the chess coordinate and create a square, and add to gridPane
-                String position = getChessCoordinate(rank, file);
+                String position = getChessCoordinate(rank, file); // E.g., "A1"
                 Square cell = new Square(position);
-                
-                // allow click functionality on each square
+
+                // Allow user interaction on square
                 cell.setOnMouseClicked(event -> handleSquareClick(position));
-                
-                squares.put(position, cell); // Store in HashMap
-                gridPane.add(cell, file, rank);
+
+                squares.put(position, cell); // Save in map
+                gridPane.add(cell, file, SIZE - rank - 1); // GUI positioning
             }
         }
     }
 
+    /**
+     * Adds all chess pieces to their standard initial positions.
+     */
     private void placePieces() {
-        // Place Pawns for both white and black players
+        // Pawns
         for (int col = 0; col < SIZE; col++) {
-            addPiece(new Piece("Pawn", true, col, 6, this)); // White Pawns
-            addPiece(new Piece("Pawn", false, col, 1, this)); // Black Pawns
+            addPiece(new Piece("Pawn", false, col, 6, this)); // White
+            addPiece(new Piece("Pawn", true, col, 1, this)); // Black
         }
 
-        // Place Rooks
-        addPiece(new Piece("Rook", true, 0, 7, this));
-        addPiece(new Piece("Rook", true, 7, 7, this));
-        addPiece(new Piece("Rook", false, 0, 0, this));
-        addPiece(new Piece("Rook", false, 7, 0, this));
+        // Rooks
+        addPiece(new Piece("Rook", false, 0, 7, this));
+        addPiece(new Piece("Rook", false, 7, 7, this));
+        addPiece(new Piece("Rook", true, 0, 0, this));
+        addPiece(new Piece("Rook", true, 7, 0, this));
 
-        // Place Knights
-        addPiece(new Piece("Knight", true, 1, 7, this));
-        addPiece(new Piece("Knight", true, 6, 7, this));
-        addPiece(new Piece("Knight", false, 1, 0, this));
-        addPiece(new Piece("Knight", false, 6, 0, this));
+        // Knights
+        addPiece(new Piece("Knight", false, 1, 7, this));
+        addPiece(new Piece("Knight", false, 6, 7, this));
+        addPiece(new Piece("Knight", true, 1, 0, this));
+        addPiece(new Piece("Knight", true, 6, 0, this));
 
-        // Place Bishops
-        addPiece(new Piece("Bishop", true, 2, 7, this));
-        addPiece(new Piece("Bishop", true, 5, 7, this));
-        addPiece(new Piece("Bishop", false, 2, 0, this));
-        addPiece(new Piece("Bishop", false, 5, 0, this));
+        // Bishops
+        addPiece(new Piece("Bishop", false, 2, 7, this));
+        addPiece(new Piece("Bishop", false, 5, 7, this));
+        addPiece(new Piece("Bishop", true, 2, 0, this));
+        addPiece(new Piece("Bishop", true, 5, 0, this));
 
-        // Place Queens
-        addPiece(new Piece("Queen", true, 3, 7, this));
-        addPiece(new Piece("Queen", false, 3, 0, this));
+        // Queens
+        addPiece(new Piece("Queen", false, 3, 7, this));
+        addPiece(new Piece("Queen", true, 3, 0, this));
 
-        // Place Kings
-        addPiece(new Piece("King", true, 4, 7, this));
-        addPiece(new Piece("King", false, 4, 0, this));
+        // Kings
+        addPiece(new Piece("King", false, 4, 7, this));
+        addPiece(new Piece("King", true, 4, 0, this));
     }
 
-
-    private void handleSquareClick(String position){
-        if (selectedPiece == null) return; // No piece selected
+    /**
+     * Handles click events on a square for selecting and moving a piece.
+     */
+    private void handleSquareClick(String position) {
+        if (selectedPiece == null)
+            return; // No piece selected yet
 
         Square oldSquare = getSquare(selectedPiece.getRank(), selectedPiece.getFile());
         Square newSquare = getSquare(position);
 
-        if (newSquare == oldSquare) return;
+        if (newSquare == oldSquare)
+            return; // Clicked same square
+        if (newSquare.isOccupied() && newSquare.getPiece().isWhite() == selectedPiece.isWhite())
+            return; // Same-color capture
 
-        else if (newSquare.isOccupied() && newSquare.getPiece().isWhite() == selectedPiece.isWhite()) {
-            return; // Cannot move to a square occupied by own color
-        }
+        if (!selectedPiece.getValidMoves().contains(position))
+            return; // Invalid move
 
-        if (!selectedPiece.getValidMoves().contains(position)) return;
-
-        // move piece from old square to new square
+        // Move piece visually and logically
         oldSquare.removePiece();
-        newSquare.setPiece(selectedPiece); 
+        newSquare.setPiece(selectedPiece);
 
         System.out.println(selectedPiece.getType() + " to " + position);
 
-        // Deselect piece after moving
-        selectedPiece.deselect();
-
+        selectedPiece.deselect(); // Deselect after move
     }
 
-    // add the piece to the board at its position
+    /**
+     * Adds a piece to its corresponding square.
+     */
     private void addPiece(Piece piece) {
         Square square = getSquare(piece.getPosition());
         square.setPiece(piece);
     }
 
+    /**
+     * Updates the selected piece (used by Square or Piece interaction).
+     */
     public void setSelectedPiece(Piece piece) {
         selectedPiece = piece;
     }
 
-    
-    // Converts grid coordinates to chess notation (A1, B2, etc.)
+    /**
+     * Generates a FEN (Forsyth–Edwards Notation) string representing current board
+     * state.
+     */
+    public String getFEN() {
+        StringBuilder fen = new StringBuilder();
+
+        // Piece placement
+        for (int rank = SIZE - 1; rank >= 0; rank--) {
+            int emptyCount = 0;
+            for (int file = 0; file < SIZE; file++) {
+                Square square = getSquare(rank, file);
+                if (square.isOccupied()) {
+                    if (emptyCount > 0) {
+                        fen.append(emptyCount);
+                        emptyCount = 0;
+                    }
+                    fen.append(square.getPiece().getFENChar());
+                } else {
+                    emptyCount++;
+                }
+            }
+            if (emptyCount > 0)
+                fen.append(emptyCount);
+            if (rank > 0)
+                fen.append('/');
+        }
+
+        // Active color
+        fen.append(' ').append(player.isWhite() ? 'w' : 'b');
+
+        // Castling rights
+        fen.append(' ');
+        if (canWhiteCastleKingside)
+            fen.append('K');
+        if (canWhiteCastleQueenside)
+            fen.append('Q');
+        if (canBlackCastleKingside)
+            fen.append('k');
+        if (canBlackCastleQueenside)
+            fen.append('q');
+        if (fen.charAt(fen.length() - 1) == ' ')
+            fen.append('-');
+
+        // En passant target
+        fen.append(' ');
+        fen.append(enPassantTargetSquare != null ? enPassantTargetSquare.getPosition() : "-");
+
+        // Half-move clock and full move number
+        fen.append(' ').append(halfMoveClock).append(' ').append(fullMoveNumber);
+
+        return fen.toString();
+    }
+
+    /**
+     * Converts board indices to chess notation like "A1", "B3", etc.
+     */
     protected String getChessCoordinate(int rank, int file) {
-        char f = (char) ('A' + file); // A-H for columns
-        int r = SIZE - rank;         // 1-8 for rows (flipped for correct chess orientation)
+        char f = (char) ('A' + file); // Convert file to letter
+        int r = 1 + rank; // Convert rank to 1-based index
         return "" + f + r;
     }
 
+    /**
+     * Validates if a given file and rank are within the board boundaries.
+     */
     public boolean isValidSquare(int file, int rank) {
         return file >= 0 && file < SIZE && rank >= 0 && rank < SIZE;
     }
 
-    // Get square by its chess notation
+    /**
+     * Get a square using chess notation like "E4".
+     */
     public Square getSquare(String position) {
         return squares.get(position);
     }
 
+    /**
+     * Get a square using file and rank.
+     */
     public Square getSquare(int rank, int file) {
         return squares.get(getChessCoordinate(rank, file));
     }
 
+    /**
+     * Returns the JavaFX grid layout for display in the UI.
+     */
     public GridPane getBoardLayout() {
         return gridPane;
     }
 
+    /**
+     * Returns the currently selected piece.
+     */
     public Piece getSelectedPiece() {
         return selectedPiece;
     }
 
+    /**
+     * Returns board size (always 8).
+     */
     public int getSize() {
         return SIZE;
     }
 
+    /**
+     * Checks if the current player is white.
+     */
     public boolean isPlayerWhite() {
         return player.isWhite();
-    }}
+    }
+}
