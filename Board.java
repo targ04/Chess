@@ -129,6 +129,11 @@ public class Board {
     private void addPiece(Piece piece) {
         Square square = getSquare(piece.getPosition());
         square.setPiece(piece);
+        if (piece.isWhite()) {
+            whitePlayer.getPiecesOnBoard().add(piece);
+        } else {
+            blackPlayer.getPiecesOnBoard().add(piece);
+        }
     }
 
     /**
@@ -272,4 +277,12 @@ public class Board {
     public Square getEnPassantTargetSquare() {
         return enPassantTargetSquare;
     }
+
+    public Player getWhitePlayer() {
+        return whitePlayer;
+    }
+
+    public Player getBlackPlayer() {
+        return blackPlayer;
+    }   
 }

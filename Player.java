@@ -40,4 +40,15 @@ public class Player {
     public void addMove(Move move) {
         moveHistory.add(move);
     }
+    public void addPossibleMove(Move move) {
+        possibleMoves.add(move);
+    }
+
+    public Set<Move> getPossibleMoves() {
+        return possibleMoves;
+    }
+
+    public Set<Piece> getPiecesOnBoard() {
+        return piecesOnBoard;
+    }
 }

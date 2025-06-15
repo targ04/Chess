@@ -23,7 +23,7 @@ public class Piece {
     private boolean selected = false; // True if piece is selected
     private Board board; // Reference to the board for interaction
 
-    private Set<String> validMoves; // All legal destination squares for this piece
+    private Set<Move> validMoves; // All legal destination squares for this piece
     private boolean hasMoved = false; // whether king has moved or not, checks for castling
 
     // Constructor to initialize all required fields and setup visuals
@@ -98,15 +98,15 @@ public class Piece {
 
     // Displays blue dots on all valid move squares
     private void showMoveIndicators() {
-        for (String move : validMoves) {
-            board.getSquare(move).setIndicator();
+        for (Move move : validMoves) {
+            board.getSquare(move.getToPosition()).setIndicator();
         }
     }
 
     // Clears any move indicators from the board
     private void clearMoveIndicators() {
-        for (String move : validMoves) {
-            board.getSquare(move).clearIndicator();
+        for (Move move : validMoves) {
+            board.getSquare(move.getToPosition()).clearIndicator();
         }
     }
 
@@ -135,6 +135,21 @@ public class Piece {
 
     // ------------------ Move Calculations by Piece Type ------------------
 
+    public void createNewMove(String toPosition, Piece targetPiece, boolean isEnPassant, boolean isCastling, boolean isPromotion) {
+        Move move = new Move(position, toPosition, this, targetPiece, board, isEnPassant, isCastling, isPromotion);
+        this.validMoves.add(move);
+        if (isWhite) {
+            board.getWhitePlayer().addPossibleMove(move);
+        }
+        else {
+            board.getBlackPlayer().addPossibleMove(move);
+        }
+    }
+
+    public void createNewMove(String toPosition, Piece targetPiece) {
+        createNewMove(toPosition, targetPiece, false, false, false);
+    }
+
     public void updateMoves() {
         validMoves.clear();
         switch (type) {
@@ -154,27 +169,29 @@ public class Piece {
         int dir = isWhite ? 1 : -1;
         int startRank = isWhite ? 1 : 6;
 
+        // calculate a single forward move
         Square fwdOne = board.getSquare(rank + dir, file);
         if (fwdOne != null && !fwdOne.isOccupied())
-            validMoves.add(fwdOne.getPosition());
+            createNewMove(fwdOne.getPosition(), null, false, false, false);
 
+        // calculate two forward moves from starting position
         if (rank == startRank) {
             Square fwdTwo = board.getSquare(rank + 2 * dir, file);
             if (fwdTwo != null && !fwdTwo.isOccupied() && !fwdOne.isOccupied())
-                validMoves.add(fwdTwo.getPosition());
+                createNewMove(fwdTwo.getPosition(), null);    
         }
 
         // Diagonal captures
         if (file > 0) {
             Square leftCap = board.getSquare(rank + dir, file - 1);
             if (leftCap != null && leftCap.isOpponentPiece(isWhite))
-                validMoves.add(leftCap.getPosition());
+                createNewMove(leftCap.getPosition(), leftCap.getPiece());
         }
 
         if (file < 7) {
             Square rightCap = board.getSquare(rank + dir, file + 1);
             if (rightCap != null && rightCap.isOpponentPiece(isWhite))
-                validMoves.add(rightCap.getPosition());
+                createNewMove(rightCap.getPosition(), rightCap.getPiece());
         }
     }
 
@@ -189,7 +206,11 @@ public class Piece {
             if (board.isValidSquare(newFile, newRank)) {
                 Square sq = board.getSquare(newRank, newFile);
                 if (!sq.isOccupied() || sq.isOpponentPiece(isWhite)) {
-                    validMoves.add(sq.getPosition());
+                    if (sq.isOpponentPiece(isWhite)) {
+                        createNewMove(sq.getPosition(), sq.getPiece());
+                    } else {
+                        createNewMove(sq.getPosition(), null);
+                    }
                 }
             }
         }
@@ -220,7 +241,11 @@ public class Piece {
             if (board.isValidSquare(newF, newR)) {
                 Square sq = board.getSquare(newR, newF);
                 if (!sq.isOccupied() || sq.isOpponentPiece(isWhite))
-                    validMoves.add(sq.getPosition());
+                    if (sq.isOpponentPiece(isWhite)) {
+                        createNewMove(sq.getPosition(), sq.getPiece());
+                    } else {
+                        createNewMove(sq.getPosition(), null);
+                    }
             }
         }
         // ---------------- Castling ----------------
@@ -229,12 +254,12 @@ public class Piece {
 
         // Kingside Castling
         if (canCastle(file, rank, 7)) {
-            validMoves.add(board.getChessCoordinate(rank, 6)); // g1/g8
+            createNewMove(board.getChessCoordinate(rank, 6), null); // f1/f8
         }
 
         // Queenside Castling
         if (canCastle(file, rank, 0)) {
-            validMoves.add(board.getChessCoordinate(rank, 2)); // c1/c8
+            createNewMove(board.getChessCoordinate(rank, 2), null); // c1/c8
         }
     }
 
@@ -270,10 +295,10 @@ public class Piece {
             Square sq = board.getSquare(newR, newF);
             if (sq.isOccupied()) {
                 if (sq.isOpponentPiece(isWhite))
-                    validMoves.add(sq.getPosition());
+                    createNewMove(sq.getPosition(), sq.getPiece());
                 break;
             }
-            validMoves.add(sq.getPosition());
+            createNewMove(sq.getPosition(), null);
             newR += dR;
             newF += dF;
         }
@@ -353,7 +378,7 @@ public class Piece {
         return position;
     }
 
-    public Set<String> getValidMoves() {
+    public Set<Move> getValidMoves() {
         return validMoves;
     }
 
