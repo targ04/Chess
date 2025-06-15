@@ -19,7 +19,6 @@ public class Piece {
     private int ICON_SIZE = 60; // Icon size in pixels
     private boolean selected = false; // True if piece is selected
     private Board board; // Reference to the board for interaction
-    private Boolean is_selectable;// Is this piece allowed to be selected on this turn?
 
     private Set<String> validMoves; // All legal destination squares for this piece
 
@@ -32,7 +31,7 @@ public class Piece {
         this.rank = rank;
         this.board = board;
         this.position = board.getChessCoordinate(rank, file);
-        this.is_selectable = board.isPlayerWhite() == isWhite;
+        // this.is_selectable = board.isWhiteTurn() == isWhite;
         this.icon = loadImage(); // Load the correct piece image
         this.validMoves = new HashSet<>();
 
@@ -57,7 +56,7 @@ public class Piece {
 
     // Adds a hand cursor effect when the mouse hovers over a selectable piece
     private void addHoverEffect() {
-        if (!is_selectable)
+        if (!isSelectable())
             return;
 
         icon.setOnMouseEntered(e -> icon.setCursor(Cursor.MOVE));
@@ -73,7 +72,7 @@ public class Piece {
      * Handles what happens when a piece is clicked
      */
     private void handlePieceClick(MouseEvent event) {
-        if (!is_selectable)
+        if (!isSelectable())
             return;
 
         if (board.getSelectedPiece() != null && board.getSelectedPiece() != this) {
@@ -308,5 +307,9 @@ public class Piece {
             case "King" -> isWhite ? 'K' : 'k';
             default -> '?';
         };
+    }
+
+    public boolean isSelectable() {
+        return isWhite == board.isWhiteTurn(); // Only allow selecting pieces of current turn
     }
 }

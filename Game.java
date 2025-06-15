@@ -5,6 +5,9 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Game class represents the main entry point of the Chess GUI application.
  * It starts with a difficulty selector and launches the board on clicking
@@ -12,6 +15,9 @@ import javafx.stage.Stage;
  */
 public class Game extends Application {
     private Stage primaryStage;
+    private Player whitePlayer;
+    private Player blackPlayer;
+    private List<Move> moveHistory = new ArrayList<>(); // Combined move list
 
     /**
      * JavaFX start method, runs when the application launches.
@@ -51,23 +57,37 @@ public class Game extends Application {
      * @param difficulty the difficulty level selected by the user
      */
     private void startGame(String difficulty) {
-        // Create the player (assumed white)
-        Player player = new Player("User", false); // false = White
+        // Create two players
+        whitePlayer = new Player("White", true);
+        blackPlayer = new Player("Black", false);
 
         // Create the AI opponent with chosen difficulty
         AI ai = new AI(difficulty);
 
         // Create the board (handles layout, piece setup, etc.)
-        Board board = new Board(player, ai);
+        Board board = new Board(whitePlayer, blackPlayer, this);
 
         // Output basic game info to console
-        System.out.println(player.getName() + " is playing as " + (player.isWhite() ? "White" : "Black"));
-        System.out.println(ai.makeMove(board)); // AI makes an initial move (if implemented)
+        System.out.println(whitePlayer.getName() + " is playing as White");
+        System.out.println(blackPlayer.getName() + " is playing as Black");
 
         // Display the board on a new scene
         primaryStage.setScene(new Scene(board.getBoardLayout(), 640, 640));
         primaryStage.setResizable(false); // Prevent window resizing
         primaryStage.setTitle("Chess Game - " + difficulty + " Mode");
+    }
+
+    public void addMove(Move move) {
+        moveHistory.add(move);
+        if (move.getMovedPiece().isWhite()) {
+            whitePlayer.addMove(move);
+        } else {
+            blackPlayer.addMove(move);
+        }
+    }
+
+    public List<Move> getMoveHistory() {
+        return moveHistory;
     }
 
     /**

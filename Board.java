@@ -10,8 +10,10 @@ public class Board {
     private GridPane gridPane; // JavaFX layout for GUI representation
     private HashMap<String, Square> squares; // Map of positions (e.g. "E2") to Square objects
     private Piece selectedPiece = null; // Currently selected piece for movement
-    private Player player; // Current human player
-    private AI ai; // Opponent AI (if implemented)
+    private Player whitePlayer;
+    private Player blackPlayer;
+    private Game game;
+    private boolean isWhiteTurn = true; // Track whose turn it is
 
     // Castling rights
     private boolean canWhiteCastleKingside = true;
@@ -30,13 +32,14 @@ public class Board {
      * Constructor initializes the board with player and AI references,
      * builds the grid and places pieces.
      */
-    public Board(Player player, AI ai) {
-        this.player = player;
-        this.ai = ai;
+    public Board(Player whitePlayer, Player blackPlayer, Game game) {
+        this.whitePlayer = whitePlayer; // Default to white, can be changed for turn logic
+        this.blackPlayer = blackPlayer; // Default to black, can be changed for turn logic
         this.gridPane = new GridPane();
         this.squares = new HashMap<>();
-        initializeBoard(); // Set up empty squares
-        placePieces(); // Add pieces to starting positions
+        this.game = game;
+        initializeBoard();
+        placePieces();
     }
 
     /**
@@ -113,6 +116,8 @@ public class Board {
             return; // Invalid move
 
         // Move piece visually and logically
+        // create a move
+        Move move = new Move(oldSquare.getPosition(), position, selectedPiece, newSquare.getPiece());
         oldSquare.removePiece();
         newSquare.setPiece(selectedPiece);
 
@@ -165,7 +170,7 @@ public class Board {
         }
 
         // Active color
-        fen.append(' ').append(player.isWhite() ? 'w' : 'b');
+        fen.append(' ').append(isWhiteTurn ? 'w' : 'b');
 
         // Castling rights
         fen.append(' ');
@@ -244,7 +249,15 @@ public class Board {
     /**
      * Checks if the current player is white.
      */
-    public boolean isPlayerWhite() {
-        return player.isWhite();
+    // public boolean isPlayerWhite() {
+    //     return player.isWhite();
+    // }
+
+    public boolean isWhiteTurn() {
+        return isWhiteTurn;
+    }
+
+    public Player getPlayerTurn() {
+        return isWhiteTurn ? whitePlayer : blackPlayer;
     }
 }
