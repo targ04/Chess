@@ -277,7 +277,6 @@ public class Piece {
         // Check for promotion
         if (type.equals("Pawn") && (rank == 7 || rank == 0)) {
             promotePawnWithChoice();
-            ; // Default to Queen for now
         }
         System.out.println(board.getFEN());
     }
@@ -286,7 +285,12 @@ public class Piece {
         this.file = pos.charAt(0) - 'A';
         this.rank = Character.getNumericValue(pos.charAt(1)) - 1;
         this.position = pos;
+        // Check for promotion
+        if (type.equals("Pawn") && (rank == 7 || rank == 0)) {
+            promotePawnWithChoice();
+        }
         System.out.println(board.getFEN());
+        
     }
 
     // ------------------ Getters ------------------
