@@ -119,7 +119,7 @@ public class Piece {
         clearMoveIndicators();
         icon.setOpacity(1.0); // Reset visual opacity
         board.setSelectedPiece(null);
-        System.out.println((isWhite ? "White " : "Black ") + type + " deselected at " + position);
+        System.out.println((isWhite ? "White " : "Black ") + type + " deselected at " + position); //
     }
 
     // Loads the correct image based on color and type (e.g., white_pawn.png)
